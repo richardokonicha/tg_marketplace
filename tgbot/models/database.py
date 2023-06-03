@@ -1,9 +1,9 @@
 import mongoengine
 import certifi
-from tgbot.models.model import User
+from tgbot.models.model import User, Product
 from tgbot import config
+from typing import List
 
-# Connect to MongoDB
 mongoengine.connect(db=config.DB_NAME, host=config.DATABASE_URL, tlsCAFile=certifi.where())
 
 class Database:
@@ -53,3 +53,32 @@ class Database:
     @staticmethod
     def get_all_users():
         return User.objects()
+    
+    @staticmethod
+    def get_products_by_vendor(vendor: str) -> List[Product]:
+        products = Product.objects(vendor=vendor)
+        return products
+
+    @staticmethod
+    def create_product(name: str, description: str, price: str, vendor: int, category: str = None,) -> Product:
+        product = Product(name=name, description=description, price=price, category=category, vendor=vendor)
+        product.save()
+        return product
+
+    @staticmethod
+    def get_product_by_id(product_id: str) -> Product:
+        product = Product.objects(id=product_id).first()
+        return product
+
+    @staticmethod
+    def update_product(product: Product, **kwargs) -> Product:
+        for key, value in kwargs.items():
+            setattr(product, key, value)
+        product.save()
+        return product
+
+    @staticmethod
+    def get_all_products() -> List[Product]:
+        products = Product.objects()
+        return products
+
