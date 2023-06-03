@@ -5,8 +5,6 @@ from tgbot.utils.messages import messages
 from tgbot.utils.buttons import lang_keys, passive_menu
 
 def start(message: Message, bot: TeleBot):
-    """this is the starting point, it checks if user is not registered 
-    and renders lang settings if user is registered uses pervious lang """
     chat_id = message.chat.id
     user_id = message.from_user.id
     name = message.from_user.first_name

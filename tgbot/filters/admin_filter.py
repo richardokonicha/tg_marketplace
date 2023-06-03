@@ -6,7 +6,6 @@ class AdminFilter(SimpleCustomFilter):
     """
     Filter for admin users
     """
-
     key = 'admin'
     def check(self, message):
 
