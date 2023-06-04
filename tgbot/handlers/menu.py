@@ -5,12 +5,15 @@ from tgbot.models import db
 from tgbot.utils.buttons import list_menu_keys
 from tgbot import config
 from tgbot.utils.messages import messages
+from tgbot.handlers.start import start
 
 
 def menu(message: Message, bot: TeleBot):
     user_id = message.from_user.id
     chat_id = message.chat.id
     user = db.get_user(user_id)
+    if user == None:
+        return start(message, bot)
     media, keyboard = buttons.menu_markup(user)
 
     bot.send_photo(chat_id=chat_id, photo=media.media,

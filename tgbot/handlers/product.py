@@ -12,8 +12,7 @@ def delete_product(call, bot):
     product = db.get_product_by_id(product_id)
     if product == None:
         return bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
-    if product.vendor != user_id:
-        # Only the vendor can delete the product
+    if product.vendor_id != user_id:
         return
     db.delete_product(product_id)
     bot.delete_message(chat_id=chat_id, message_id=message_id)
@@ -27,12 +26,20 @@ def buy_product(call, bot):
     product_id = call.data.split(":")[1]
     product = db.get_product_by_id(product_id)
     if product == None:
-        return bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
+        bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
+        return bot.answer_callback_query(call.id, text="Product Not Available")
+
     purchase = db.create_purchase(
         user_id=user_id,
-        vendor=product.vendor,
+        buyer_username=user.username,
+        buyer_id=user_id,
+        vendor_id=product.vendor_id,
+        vendor_username=product.vendor_username,
         product_id=product.id,
-        address=user.address
+        product_name=product.name,
+        address=user.address,
+        price=product.price,
+        description=product.description
     )
 
     message_text, keyboard = buttons.order_placed_markup(
@@ -52,7 +59,7 @@ def view_vendor_products(call, bot):
     user_id = call.from_user.id
     message_id = call.message.message_id
     user = db.get_user(user_id)
-    products = db.get_products_by_vendor(vendor=user_id)
+    products = db.get_products_by_vendor(vendor_id=user_id)
     media, keyboard = buttons.all_products_markup(products, user)
     bot.edit_message_media(
         chat_id=chat_id,
@@ -101,6 +108,7 @@ def save_product_value(message, **kwargs):
     value = kwargs.get("value")
     create_product_id = kwargs.get("create_product_id")
     user_id = message.from_user.id
+    username = message.from_user.username
     chat_id = message.chat.id
 
     fields[value] = message.text
@@ -159,9 +167,10 @@ def save_product_value(message, **kwargs):
         name = fields["name"]
         description = fields["description"]
         price = fields["price"]
-        vendor = user_id
+        vendor_id = user_id
+        vendor_username = username
 
-        db.create_product(name, description, price, vendor)
+        db.create_product(name, description, price, vendor_id, vendor_username)
         bot.edit_message_media(
             chat_id=chat_id,
             message_id=create_product_id,
