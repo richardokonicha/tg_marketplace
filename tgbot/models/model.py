@@ -1,5 +1,6 @@
-from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, FloatField
+from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField
 from datetime import datetime
+
 
 class User(Document):
     user_id = IntField(unique=True)
@@ -20,16 +21,15 @@ class User(Document):
         self.save()
 
 
-class Order(Document):
-    buyer = StringField(default="")
-    from_id = IntField(default=0)
-    vendor = StringField(default="")
-    message_id = IntField(default=0)
-    item = StringField(default="")
+class Purchase(Document):
+    user_id = IntField(default="")
+    vendor = IntField(default="")
+    product_id = ObjectIdField(default="")
     address = StringField(default="")
     active = BooleanField(default=True)
     status = StringField(default="new")
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=datetime.now)
 
 
 class Product(Document):
