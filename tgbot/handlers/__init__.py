@@ -1,4 +1,3 @@
-# Create files for handlers in this folder.
 import re
 from .admin import admin_user
 from .spam_command import anti_spam
@@ -8,13 +7,12 @@ from .language import show_language, set_language
 from .balances import balance
 from .deposits import deposit, promo
 from .menu import menu
-from .transactions import transaction
 from .callback_answer import callback_answer
-from .withdrawal import withdrawal
-from tgbot.filters.admin_filter import AdminFilter
+from tgbot.utils.helpers import message_age_filter_func
 
 
 def register_handlers(bot):
+
     bot.register_message_handler(
         admin_user, commands=['startadmin'], admin=True, pass_bot=True)
     bot.register_message_handler(
@@ -23,7 +21,7 @@ def register_handlers(bot):
         anti_spam, commands=['spam'], pass_bot=True)
     bot.register_message_handler(
         start, commands=['start'], pass_bot=True)
-    
+
     bot.register_message_handler(
         set_language,
         func=lambda message: message.content_type == "text"
@@ -44,7 +42,7 @@ def register_handlers(bot):
         and (
             bool(re.search(r'^balance', message.text.split()[0], re.IGNORECASE)) or
             bool(re.search(r'^bilance',
-                 message.text.split()[0], re.IGNORECASE))
+                           message.text.split()[0], re.IGNORECASE))
         ),
         pass_bot=True
     )
@@ -79,5 +77,3 @@ def register_handlers(bot):
 
     bot.register_callback_query_handler(
         callback_answer, func=lambda call: True, pass_bot=True)
-
-   

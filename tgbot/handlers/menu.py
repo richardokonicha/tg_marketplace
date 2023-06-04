@@ -1,3 +1,4 @@
+from tgbot.utils import buttons
 from telebot import TeleBot
 from telebot.types import Message
 from tgbot.models import db
@@ -10,13 +11,30 @@ def menu(message: Message, bot: TeleBot):
     user_id = message.from_user.id
     chat_id = message.chat.id
     user = db.get_user(user_id)
-    lang = user.language
+    media, keyboard = buttons.menu_markup(user)
 
-    markup_balances = messages["markup_balances"][lang].format(account_balance=user.account_balance)
+    bot.send_photo(chat_id=chat_id, photo=media.media,
+                   caption=media.caption, reply_markup=keyboard)
 
-    bot.send_photo(
+
+def back_to_menu(call, bot):
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+    message_id = call.message.message_id
+    user = db.get_user(user_id)
+    media, keyboard = buttons.menu_markup(user)
+    bot.edit_message_media(
         chat_id=chat_id,
-        photo=config.MENU_PHOTO,
-        reply_markup=list_menu_keys,
-        caption=markup_balances
+        message_id=message_id,
+        media=media,
+        reply_markup=keyboard
     )
+
+
+def exit_view(call, bot):
+    message_id = call.message.message_id
+    chat_id = call.message.chat.id
+    try:
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
+    except:
+        pass
