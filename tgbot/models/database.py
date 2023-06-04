@@ -14,10 +14,11 @@ class Database:
         return User.objects(user_id=user_id).first()
 
     @staticmethod
-    def create_user(user_id, name, language=None, address=None, is_vendor=False):
+    def create_user(user_id, name, username: str, language=None, address=None, is_vendor=False):
         user = User(
             user_id=user_id,
             name=name,
+            username=username,
             is_vendor=is_vendor,
             address=address,
             language=language
@@ -57,14 +58,14 @@ class Database:
         return User.objects()
 
     @staticmethod
-    def get_products_by_vendor(vendor: str) -> List[Product]:
-        products = Product.objects(vendor=vendor)
+    def get_products_by_vendor(vendor_id: str) -> List[Product]:
+        products = Product.objects(vendor_id=vendor_id)
         return products
 
     @staticmethod
-    def create_product(name: str, description: str, price: str, vendor: int, category: str = None,) -> Product:
+    def create_product(name: str, description: str, price: str, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
         product = Product(name=name, description=description,
-                          price=price, category=category, vendor=vendor)
+                          price=price, category=category, vendor_id=vendor_id, vendor_username=vendor_username)
         product.save()
         return product
 
@@ -96,12 +97,18 @@ class Database:
     # Purchase ------------------------
 
     @staticmethod
-    def create_purchase(user_id: int, vendor: int, product_id: str, address: str) -> Purchase:
+    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: str, description: str) -> Purchase:
         purchase = Purchase(
             user_id=user_id,
-            vendor=vendor,
+            buyer_username=buyer_username,
+            buyer_id=buyer_id,
+            vendor_id=vendor_id,
+            vendor_username=vendor_username,
             product_id=product_id,
-            address=address
+            product_name=product_name,
+            address=address,
+            price=price,
+            description=description
         )
         purchase.save()
         return purchase
@@ -118,12 +125,12 @@ class Database:
 
     @staticmethod
     def get_purchases_by_vendor(vendor_id) -> List[Purchase]:
-        purchases = Purchase.objects(vendor=vendor_id)
+        purchases = Purchase.objects(vendor_id=vendor_id)
         return purchases
 
     @staticmethod
-    def get_purchases_by_buyer(buyer_id) -> List[Purchase]:
-        purchases = Purchase.objects(buyer=buyer_id)
+    def get_purchases_by_user(user_id) -> List[Purchase]:
+        purchases = Purchase.objects(user_id=user_id)
         return purchases
 
     @staticmethod
