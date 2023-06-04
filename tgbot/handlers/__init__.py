@@ -12,6 +12,7 @@ from tgbot.utils.helpers import message_age_filter_func
 
 
 def register_handlers(bot):
+
     bot.register_message_handler(
         admin_user, commands=['startadmin'], admin=True, pass_bot=True)
     bot.register_message_handler(
