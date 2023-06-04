@@ -209,7 +209,7 @@ def menu_markup(user):
 
 
 def view_product_markup(product, user_id):
-    is_mine = user_id == product.vendor
+    is_mine = user_id == product.vendor_id
     message_text = f"""
         {'My' if is_mine else 'View'} Product:
         
@@ -223,8 +223,48 @@ def view_product_markup(product, user_id):
 
     button_text = "Delete" if is_mine else "Buy"
     button_callback = f"delete_product:{product.id}" if is_mine else f"buy_product:{product.id}"
-    keyboard = [[InlineKeyboardButton(
-        button_text, callback_data=button_callback)]]
+
+    keyboard = [[
+        InlineKeyboardButton(button_text, callback_data=button_callback),
+        InlineKeyboardButton("Cancel", callback_data="cancel")
+    ]]
+
+    return message_text, InlineKeyboardMarkup(keyboard)
+
+
+def view_purchase_markup(purchase, user):
+    is_vendor = user.is_vendor
+    message_text = f"""
+        {'View Orders' if is_vendor else 'My Orders'}:
+        
+        <b>User Name:</b> {purchase.buyer_username}
+        <b>User ID:</b> {purchase.buyer_id}
+        
+        <b>Vendor ID:</b> {purchase.vendor_id}
+        <b>Vendor Username:</b> @{purchase.vendor_username}
+        
+        <b>User Address:</b> {purchase.address}
+        
+        <b>Product Name:</b> {purchase.product_name}
+        
+        💰 <b>Price:</b> {purchase.price}
+        
+        📝 <b>Description:</b>
+        {purchase.description}
+    """
+
+    if is_vendor:
+        button_text = "Completed"
+        button_callback = f"complete_purchase:{purchase.id}"
+        keyboard = [
+            [InlineKeyboardButton(button_text, callback_data=button_callback)],
+            [InlineKeyboardButton("Cancel", callback_data="cancel")]
+        ]
+    else:
+        button_text = "Cancel"
+        button_callback = "cancel"
+        keyboard = [[InlineKeyboardButton(
+            button_text, callback_data=button_callback)]]
 
     return message_text, InlineKeyboardMarkup(keyboard)
 
