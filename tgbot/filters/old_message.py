@@ -1,17 +1,6 @@
+import datetime
 from telebot.custom_filters import SimpleCustomFilter
 from tgbot import config
-import datetime
-
-
-class AdminFilter(SimpleCustomFilter):
-    """
-    Filter for admin users
-    """
-    key = 'admin'
-
-    def check(self, message):
-
-        return int(message.chat.id) == int(config.ADMIN_ID)
 
 
 class MessageAgeFilter(SimpleCustomFilter):
