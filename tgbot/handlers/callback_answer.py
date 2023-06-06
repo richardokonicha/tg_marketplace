@@ -20,7 +20,6 @@ def callback_answer(call, **kwargs):
     message_id = call.message.message_id
     message = call.message
     user = db.get_user(user_id)
-    lang = user.language
     bot = kwargs.get('bot')
 
     if call.data == "products":
