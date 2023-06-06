@@ -21,8 +21,6 @@ def callback_answer(call, **kwargs):
     message = call.message
     user = db.get_user(user_id)
     bot = kwargs.get('bot')
-    markup_balances = messages["markup_balances"][lang].format(
-        account_balance=user.account_balance)
 
     if call.data == "products":
         logger.info(f"User {user_id} requested to view products")
