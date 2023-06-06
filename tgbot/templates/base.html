@@ -7,19 +7,15 @@
 </head>
 
 <body>
-  <title class="text-3xl font-bold underline">Hello from Tgbot</title>
-  <!-- {% if name %}
-    <h1>Hello {{ name }}!</h1>
-  {% else %}
-    <h1>Hello, World!</h1>
-  {% endif %} -->
-    <div class="content">
-      {% include 'content.html' %}
-    </div>
-  
-
-  {% block content %}
-  {% endblock %}
-
+  <title class="text-3xl font-bold underline">Hello from TG bot</title>
+  <div class="min-h-full">
+  {% include 'nav.html' %}
+    <main>
+      <div class="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
+          {% block content %}
+          {% endblock %}
+      </div>
+    </main>
+  </div>
 </body>
 </html>
