@@ -15,9 +15,9 @@ def register_handlers(bot):
     bot.register_message_handler(
         admin_user, commands=['startadmin'], admin=True, pass_bot=True)
     bot.register_message_handler(
-        make_regular_user, commands=['make user'], pass_bot=True)
+        make_regular_user, commands=['makeuser'], pass_bot=True)
     bot.register_message_handler(
-        make_vendor, commands=['make vendor'], pass_bot=True)
+        make_vendor, commands=['makevendor'], pass_bot=True)
     bot.register_message_handler(
         anti_spam, commands=['spam'], pass_bot=True)
     bot.register_message_handler(

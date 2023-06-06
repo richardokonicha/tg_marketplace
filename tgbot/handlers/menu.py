@@ -25,6 +25,8 @@ def back_to_menu(call, bot):
     user_id = call.from_user.id
     message_id = call.message.message_id
     user = db.get_user(user_id)
+    if user == None:
+        return start(call.message, bot)
     media, keyboard = buttons.menu_markup(user)
     bot.edit_message_media(
         chat_id=chat_id,
