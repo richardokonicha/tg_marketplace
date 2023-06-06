@@ -1,7 +1,7 @@
 import re
 from .admin import admin_user
 from .spam_command import anti_spam
-from .user import any_user
+from .user import make_regular_user, make_vendor
 from .start import start
 from .language import show_language, set_language
 from .balances import balance
@@ -12,11 +12,12 @@ from tgbot.utils.helpers import message_age_filter_func
 
 
 def register_handlers(bot):
-
     bot.register_message_handler(
         admin_user, commands=['startadmin'], admin=True, pass_bot=True)
     bot.register_message_handler(
-        any_user, commands=['starttest'], pass_bot=True)
+        make_regular_user, commands=['make user'], pass_bot=True)
+    bot.register_message_handler(
+        make_vendor, commands=['make vendor'], pass_bot=True)
     bot.register_message_handler(
         anti_spam, commands=['spam'], pass_bot=True)
     bot.register_message_handler(
@@ -47,23 +48,23 @@ def register_handlers(bot):
         pass_bot=True
     )
 
-    bot.register_message_handler(
-        deposit,
-        func=lambda message: message.content_type == "text"
-        and (
-            bool(re.search(r'deposit$', message.text, re.IGNORECASE)) or
-            bool(re.search(r'Depositare$', message.text, re.IGNORECASE))
-        ),
-        admin=False, pass_bot=True
-    )
+    # bot.register_message_handler(
+    #     deposit,
+    #     func=lambda message: message.content_type == "text"
+    #     and (
+    #         bool(re.search(r'deposit$', message.text, re.IGNORECASE)) or
+    #         bool(re.search(r'Depositare$', message.text, re.IGNORECASE))
+    #     ),
+    #     admin=False, pass_bot=True
+    # )
 
     bot.register_message_handler(
         promo,
         func=lambda message: message.content_type == "text"
         and (
-            bool(re.search(r'^PROMO', message.text, re.IGNORECASE))
+            bool(re.search(r'^deposit', message.text, re.IGNORECASE))
         ),
-        admin=False, pass_bot=True
+        pass_bot=True
     )
 
     bot.register_message_handler(

@@ -3,11 +3,13 @@ from telebot.types import Message
 from tgbot.models import db
 from tgbot.utils.messages import messages
 from tgbot.utils.buttons import lang_keys, passive_menu
+from tgbot.utils.helpers import get_user_profile_photo_url
 
 
 def start(message: Message, bot: TeleBot):
     chat_id = message.chat.id
     user_id = message.from_user.id
+    # photo_url = get_user_profile_photo_url(user_id, bot)
     username = message.from_user.username
     name = message.from_user.first_name
     user = db.get_user(user_id)

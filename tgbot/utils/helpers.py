@@ -1,5 +1,6 @@
 import datetime
 from tgbot import config
+import base64
 
 
 def send_notification(message):
@@ -26,3 +27,21 @@ def message_age_filter_func(call):
         send_notification("Callback from an old message triggered")
 
     return True
+
+
+def get_user_profile_photo_url(user_id, bot):
+    photos = bot.get_user_profile_photos(user_id=user_id)
+    if photos.total_count > 0:
+        photo = photos.photos[0][0]
+        file_id = photo.file_id
+        file = bot.get_file(file_id)
+        photo_url = file.file_path
+
+        with open(photo_url, "rb") as photo_file:
+            base64_data = base64.b64encode(photo_file.read()).decode("utf-8")
+
+        src = f"data:image/png;base64,{base64_data}"
+
+        return src
+
+    return None
