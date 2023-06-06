@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField
+from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, FloatField
 from datetime import datetime
 
 class User(Document):
@@ -21,9 +21,6 @@ class User(Document):
 
 
 class Order(Document):
-    """
-    Bot Order Model
-    """
     buyer = StringField(default="")
     from_id = IntField(default=0)
     vendor = StringField(default="")
@@ -33,3 +30,15 @@ class Order(Document):
     active = BooleanField(default=True)
     status = StringField(default="new")
     created_at = DateTimeField()
+
+
+class Product(Document):
+    name = StringField(required=True)
+    description = StringField(default="")
+    price = StringField(required=True)
+    category = StringField(default="General")
+    vendor = IntField(required=True)
+
+    meta = {
+        'collection': 'products'
+    }
