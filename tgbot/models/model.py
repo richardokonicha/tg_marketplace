@@ -1,9 +1,11 @@
-from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField
+from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField
 from datetime import datetime
+
 
 class User(Document):
     user_id = IntField(unique=True)
     name = StringField(required=True)
+    username = StringField(default="unknown")
     is_vendor = BooleanField(default=False)
     language = StringField(default="en")
     address = StringField()
@@ -20,16 +22,35 @@ class User(Document):
         self.save()
 
 
-class Order(Document):
-    """
-    Bot Order Model
-    """
-    buyer = StringField(default="")
-    from_id = IntField(default=0)
-    vendor = StringField(default="")
-    message_id = IntField(default=0)
-    item = StringField(default="")
+class Purchase(Document):
+    user_id = IntField(default="")
+    buyer_username = StringField(default="")
+    buyer_id = IntField(default="")
+    vendor_id = IntField(default="")
+    vendor_username = StringField(default="")
+    product_id = ObjectIdField(default="")
+    product_name = StringField(default="")
+    price = StringField(default="$")
+    description = StringField(default="description")
     address = StringField(default="")
     active = BooleanField(default=True)
     status = StringField(default="new")
-    created_at = DateTimeField()
+    created_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=datetime.now)
+
+    def get_created_at(self):
+        formatted_date = self.created_at.strftime("%d %b")
+        return formatted_date
+
+
+class Product(Document):
+    name = StringField(required=True)
+    description = StringField(default="")
+    price = StringField(required=True)
+    category = StringField(default="General")
+    vendor_id = IntField(required=True)
+    vendor_username = StringField(default="")
+
+    meta = {
+        'collection': 'products'
+    }

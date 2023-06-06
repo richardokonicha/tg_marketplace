@@ -1,16 +1,20 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, render_template
 from telebot import TeleBot, apihelper, types as telebot_types
 from tgbot import config
 from tgbot.filters.admin_filter import AdminFilter
+
 from tgbot.handlers import register_handlers
 from tgbot.middlewares.antiflood_middleware import antispam_func
 from tgbot.states.register_state import Register
+from tgbot.models import db
+
 
 apihelper.ENABLE_MIDDLEWARE = True
 
-server = Flask(__name__)
+server = Flask(__name__, template_folder='tgbot/templates')
 bot = TeleBot(config.TOKEN, num_threads=5)
+
 
 @bot.message_handler(commands=['test'])
 def test(message):
@@ -18,6 +22,7 @@ def test(message):
     You can create a function and use parameter pass_bot.
     """
     bot.send_message(message.chat.id, "Hello, testing !")
+
 
 register_handlers(bot)
 
@@ -30,6 +35,13 @@ def checkWebhook():
     bot.process_new_updates(
         [telebot_types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "Your bot application is still active!", 200
+
+
+@server.route('/dashboard/')
+@server.route('/dashboard/<name>')
+def dashboard(name=None):
+    users = db.get_all_users()
+    return render_template('dashboard.html', name=name, users=users)
 
 
 @server.route("/")
@@ -45,7 +57,7 @@ def run_web():
         server.run(
             host="0.0.0.0",
             threaded=True,
-            port=int(os.environ.get('PORT', 5001))
+            port=int(os.environ.get('PORT', 5001)),
         )
 
 
