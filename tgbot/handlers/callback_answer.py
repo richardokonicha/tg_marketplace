@@ -7,7 +7,7 @@ from tgbot import config
 from tgbot.handlers.product import save_product_value, buy_product, delete_product, view_product, view_all_products, view_vendor_products
 from telebot.types import InputMediaPhoto
 from tgbot.handlers.menu import back_to_menu, exit_view
-from tgbot.handlers.purchase import view_purchase, vendor_purchase_orders, all_purchase_order
+from tgbot.handlers.purchase import view_purchase, vendor_purchase_orders
 
 
 logging.basicConfig(level=logging.INFO)
@@ -22,16 +22,15 @@ def callback_answer(call, **kwargs):
     user = db.get_user(user_id)
     lang = user.language
     bot = kwargs.get('bot')
-    markup_balances = messages["markup_balances"][lang].format(
-        account_balance=user.account_balance)
 
     if call.data == "products":
         logger.info(f"User {user_id} requested to view products")
+        media, keyboard = product_menu_markup(user)
         bot.edit_message_media(
             chat_id=chat_id,
             message_id=message_id,
-            media=InputMediaPhoto(config.MENU_PHOTO, caption=markup_balances),
-            reply_markup=product_menu_markup,
+            media=media,
+            reply_markup=keyboard,
         )
     elif call.data == "continue_shopping":
         exit_view(call, bot)

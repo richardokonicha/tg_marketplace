@@ -159,16 +159,32 @@ def get_create_product_keyboard(fields=None):
     return InlineKeyboardMarkup(create_product_keyboard)
 
 
-# ---------
-product_keyboard = [
-    [InlineKeyboardButton("All Products 🧶", callback_data="all_products")],
-    [InlineKeyboardButton("Vendor Products", callback_data="vendor_products")],
-    [InlineKeyboardButton("Create New Product",
-                          callback_data="create_product")],
-    [InlineKeyboardButton("<<", callback_data="back_to_menu")]
-]
-product_menu_markup = InlineKeyboardMarkup(product_keyboard)
-# ---------------
+def product_menu_markup(user):
+    is_vendor = user.is_vendor
+    media = InputMediaPhoto(
+        config.MENU_PHOTO, caption=f"🏦 Balance  {user.account_balance} BTC")
+    if is_vendor:
+        keys = [
+            [InlineKeyboardButton(
+                "All Products 🧶", callback_data="all_products")],
+            [InlineKeyboardButton(
+                "Vendor Products", callback_data="vendor_products")],
+            [InlineKeyboardButton("Create New Product",
+                                  callback_data="create_product")],
+            [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+        ]
+    else:
+        keys = [
+            [InlineKeyboardButton(
+                "All Products 🧶", callback_data="all_products")],
+            [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+        ]
+
+    keyboard = InlineKeyboardMarkup(keys)
+    return media, keyboard
+
+# -------------
+
 
 # -----------
 products_button = InlineKeyboardButton("Products 🧶", callback_data="products")

@@ -7,6 +7,7 @@ from tgbot.filters.admin_filter import AdminFilter
 from tgbot.handlers import register_handlers
 from tgbot.middlewares.antiflood_middleware import antispam_func
 from tgbot.states.register_state import Register
+from tgbot.models import db
 
 
 apihelper.ENABLE_MIDDLEWARE = True
@@ -39,7 +40,8 @@ def checkWebhook():
 @server.route('/dashboard/')
 @server.route('/dashboard/<name>')
 def dashboard(name=None):
-    return render_template('dashboard.html', name=name)
+    users = db.get_all_users()
+    return render_template('dashboard.html', name=name, users=users)
 
 
 @server.route("/")
