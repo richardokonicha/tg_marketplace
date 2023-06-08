@@ -94,6 +94,16 @@ def deposit(message: Message, bot: TeleBot):
     lang = user.language
     message_id = message.message_id
     deposit_amount_text = messages["deposit_amount_text"][lang]
+
+    # import pdb; pdb.set_trace()
+
+    # amount = parseFloat(deposit_amount_text)
+    # invoice = payment_client.create_invoice(
+    #     amount=amount,
+    #     description="Deposit of {amount} USD from {user.name}"
+    # )
+
+
     bot.send_message(
         chat_id,
         text=deposit_amount_text,
@@ -116,6 +126,13 @@ def promo(message: Message, bot: TeleBot):
     balance = user.account_balance
     lang = user.language
     promo = message.text.split(" ")[-1]
+
+    amount = float(promo)
+    invoice = payment_client.create_invoice(
+        amount=amount,
+        description="Deposit of {amount} USD from {user.name}"
+    )
+
     try:
         promo = Decimal(promo)
         new_balance = user.account_balance + promo
