@@ -38,9 +38,11 @@ def purchase_markup(user, purchases):
     for purchase in purchases:
         status = translation['active'] if purchase.active else translation['inactive']
         button_text = f"{purchase.get_created_at()}: {purchase.product_name} {status}"
-        keys.append([InlineKeyboardButton(button_text, callback_data=f"purchase:{purchase.id}")])
+        keys.append([InlineKeyboardButton(
+            button_text, callback_data=f"purchase:{purchase.id}")])
 
-    keys.append([InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")])
+    keys.append([InlineKeyboardButton(
+        translation['back_to_menu'], callback_data="back_to_menu")])
 
     keyboard = InlineKeyboardMarkup(keys)
     return media, keyboard
@@ -145,7 +147,7 @@ def order_placed_markup(product, purchase, user):
 
 def all_products_markup(products, user):
     lang = user.language
-    
+
     translations = {
         "en": {
             "balance": f"🏦 Balance: {user.account_balance} BTC",
@@ -167,10 +169,10 @@ def all_products_markup(products, user):
                 product.name, callback_data=f"view_product:{product.id}")
         ])
     all_products_markup.append([
-        InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")
+        InlineKeyboardButton(
+            translation['back_to_menu'], callback_data="back_to_menu")
     ])
     return media, InlineKeyboardMarkup(all_products_markup)
-
 
 
 def get_create_product_keyboard(user, fields=None):
@@ -198,9 +200,12 @@ def get_create_product_keyboard(user, fields=None):
 
     translation = translations[lang] if lang in translations else translations["en"]
 
-    name = fields.get('name', translation['enter_name']) if fields else translation['enter_name']
-    description = fields.get('description', translation['enter_description']) if fields else translation['enter_description']
-    price = fields.get('price', translation['enter_price']) if fields else translation['enter_price']
+    name = fields.get(
+        'name', translation['enter_name']) if fields else translation['enter_name']
+    description = fields.get(
+        'description', translation['enter_description']) if fields else translation['enter_description']
+    price = fields.get(
+        'price', translation['enter_price']) if fields else translation['enter_price']
 
     create_product_keyboard = [
         [InlineKeyboardButton(
@@ -209,7 +214,8 @@ def get_create_product_keyboard(user, fields=None):
             f"{translation['description']}: {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
             f"{translation['price']}: {price}", callback_data="create_product:price")],
-        [InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")]
+        [InlineKeyboardButton(translation['back_to_menu'],
+                              callback_data="back_to_menu")]
     ]
 
     return InlineKeyboardMarkup(create_product_keyboard)
@@ -233,27 +239,36 @@ def product_menu_markup(user):
         }
     }
 
-    lang = user.language if user.language in translations else "en"  # Default to English if language not available
+    # Default to English if language not available
+    lang = user.language if user.language in translations else "en"
     translation = translations[lang]
 
     is_vendor = user.is_vendor
-    media = InputMediaPhoto(config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
+    media = InputMediaPhoto(
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
 
     if is_vendor:
         keys = [
-            [InlineKeyboardButton(translation["all_products"], callback_data="all_products")],
-            [InlineKeyboardButton(translation["vendor_products"], callback_data="vendor_products")],
-            [InlineKeyboardButton(translation["create_product"], callback_data="create_product")],
-            [InlineKeyboardButton(translation["back_to_menu"], callback_data="back_to_menu")]
+            [InlineKeyboardButton(
+                translation["all_products"], callback_data="all_products")],
+            [InlineKeyboardButton(
+                translation["vendor_products"], callback_data="vendor_products")],
+            [InlineKeyboardButton(
+                translation["create_product"], callback_data="create_product")],
+            [InlineKeyboardButton(
+                translation["back_to_menu"], callback_data="back_to_menu")]
         ]
     else:
         keys = [
-            [InlineKeyboardButton(translation["all_products"], callback_data="all_products")],
-            [InlineKeyboardButton(translation["back_to_menu"], callback_data="back_to_menu")]
+            [InlineKeyboardButton(
+                translation["all_products"], callback_data="all_products")],
+            [InlineKeyboardButton(
+                translation["back_to_menu"], callback_data="back_to_menu")]
         ]
 
     keyboard = InlineKeyboardMarkup(keys)
     return media, keyboard
+
 
 def menu_markup(user):
     translations = {
@@ -275,23 +290,28 @@ def menu_markup(user):
         }
     }
 
-    lang = user.language if user.language in translations else "en"  # Default to English if language not available
+    # Default to English if language not available
+    lang = user.language if user.language in translations else "en"
     translation = translations[lang]
 
-    media = InputMediaPhoto(config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
+    media = InputMediaPhoto(
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
     list_menu_keys = [
-        [InlineKeyboardButton(translation["products"], callback_data="products")],
-        [InlineKeyboardButton(translation["website"], url="https://queen.fugoku.com")],
-        [InlineKeyboardButton(translation["group"], url="https://t.me/followfootprintchat")],
-        [InlineKeyboardButton(translation["admin"], url="https://t.me/@markyoku")],
-        [InlineKeyboardButton(translation["purchase"], callback_data="purchase")]
+        [InlineKeyboardButton(translation["products"],
+                              callback_data="products")],
+        [InlineKeyboardButton(translation["website"], url=config.WEBSITE_URL)],
+        [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
+        [InlineKeyboardButton(translation["admin"], url=config.ADMIN_USER)],
+        [InlineKeyboardButton(translation["purchase"],
+                              callback_data="purchase")]
     ]
     keyboard = InlineKeyboardMarkup(list_menu_keys)
     return media, keyboard
 
+
 def view_purchase_markup(purchase, user):
     lang = user.language
-    
+
     translations = {
         "en": {
             "view_orders": "View Orders",
@@ -350,7 +370,8 @@ def view_purchase_markup(purchase, user):
         button_callback = f"complete_purchase:{purchase.id}"
         keyboard = [
             [InlineKeyboardButton(button_text, callback_data=button_callback)],
-            [InlineKeyboardButton(translation['cancel'], callback_data="cancel")]
+            [InlineKeyboardButton(translation['cancel'],
+                                  callback_data="cancel")]
         ]
     else:
         button_text = translation['cancel']
@@ -359,6 +380,7 @@ def view_purchase_markup(purchase, user):
             button_text, callback_data=button_callback)]]
 
     return message_text, InlineKeyboardMarkup(keyboard)
+
 
 def get_create_product_keyboard(user, fields=None):
     lang = user.language
@@ -379,10 +401,12 @@ def get_create_product_keyboard(user, fields=None):
 
     translation = translations[lang] if lang in translations else translations["en"]
 
-    name = fields.get('name', translation['name']) if fields else translation['name']
+    name = fields.get(
+        'name', translation['name']) if fields else translation['name']
     description = fields.get(
         'description', translation['description']) if fields else translation['description']
-    price = fields.get('price', translation['price']) if fields else translation['price']
+    price = fields.get(
+        'price', translation['price']) if fields else translation['price']
     create_product_keyboard = [
         [InlineKeyboardButton(
             f"{translation['name']} {name}", callback_data="create_product:name")],
@@ -390,7 +414,8 @@ def get_create_product_keyboard(user, fields=None):
             f"{translation['description']} {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
             f"{translation['price']} {price}", callback_data="create_product:price")],
-        [InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")]
+        [InlineKeyboardButton(translation['back_to_menu'],
+                              callback_data="back_to_menu")]
     ]
     return InlineKeyboardMarkup(create_product_keyboard)
 
