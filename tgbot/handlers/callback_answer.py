@@ -24,7 +24,7 @@ def callback_answer(call, **kwargs):
 
     if call.data == "products":
         logger.info(f"User {user_id} requested to view products")
-        media, keyboard = product_menu_markup(user)
+        media, keyboard = buttons.product_menu_markup(user)
         bot.edit_message_media(
             chat_id=chat_id,
             message_id=message_id,
@@ -67,7 +67,7 @@ def callback_answer(call, **kwargs):
             message_id=message_id,
             media=InputMediaPhoto(
                 config.MENU_PHOTO, caption="Create New Product"),
-            reply_markup=buttons.get_create_product_keyboard(),
+            reply_markup=buttons.get_create_product_keyboard(user),
         )
     elif call.data.startswith("create_product:"):
         fields = {}
