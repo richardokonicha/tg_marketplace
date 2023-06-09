@@ -4,6 +4,6 @@ services:
   queen:
     build:
       context: .
-    ports:
-      - "5006:5006"
+    # ports:
+    #   - "5001:5001"
     command: python main.py
