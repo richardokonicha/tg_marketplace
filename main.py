@@ -6,7 +6,6 @@ from tgbot.filters.admin_filter import AdminFilter
 
 from tgbot.handlers import register_handlers
 from tgbot.middlewares.antiflood_middleware import antispam_func
-from tgbot.states.register_state import Register
 from tgbot.models import db
 
 

@@ -43,7 +43,9 @@ def buy_product(call, bot):
     )
 
     message_text, keyboard = buttons.order_placed_markup(
-        product, purchase)
+        product, purchase, user)
+
+    vender_id = product.vendor_id
 
     bot.edit_message_text(
         text=message_text,
@@ -52,6 +54,19 @@ def buy_product(call, bot):
         parse_mode="HTML",
         reply_markup=keyboard,
     )
+
+    vendor_alert = f"""```
+    From User {user.name}
+    Address:  {user.address}
+    UserId:   {user.user_id}
+    Username:  @{user.username}
+        
+    New Order:  {product.name} 
+    Price:       {product.price}
+    Description: {product.description}
+    ```
+    """
+    bot.send_message(text=vendor_alert, chat_id=vender_id)
 
 
 def view_vendor_products(call, bot):
@@ -72,11 +87,12 @@ def view_vendor_products(call, bot):
 def view_product(call, bot):
     chat_id = call.message.chat.id
     user_id = call.from_user.id
+    user = db.get_user(user_id)
     product_id = call.data.split(":")[1]
     product = db.get_product_by_id(product_id)
     if product == None:
         return bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
-    message_text, keyboard = buttons.view_product_markup(product, user_id)
+    message_text, keyboard = buttons.view_product_markup(product, user)
     bot.send_message(
         chat_id=chat_id,
         text=message_text,

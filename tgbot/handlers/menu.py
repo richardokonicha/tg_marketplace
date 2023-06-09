@@ -2,7 +2,6 @@ from tgbot.utils import buttons
 from telebot import TeleBot
 from telebot.types import Message
 from tgbot.models import db
-from tgbot.utils.buttons import list_menu_keys
 from tgbot import config
 from tgbot.utils.messages import messages
 from tgbot.handlers.start import start
