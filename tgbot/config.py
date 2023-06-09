@@ -42,6 +42,10 @@ MAX_MESSAGE_AGE_MINUTES = 1
 ADMIN_ID = os.getenv('ADMIN_ID', 1053579181)
 MENU_PHOTO = os.getenv(
     'MENU_PHOTO', "https://mybestwine.ch/wp-content/uploads/2015/07/2015-07-b-.jpg-1200-x-400.jpg")
+BTCPAY_STORE_ID = os.getenv(
+    'BTCPAY_STORE_ID', '4sfUtKnNNDvXzKEsyNyy5nrPe6WF31KLirrNkijdcUU4')
+BTCPAY_TOKEN = os.getenv(
+    'BTCPAY_TOKEN', 'cf34fe5713d7e4988d871df0f0621617e4ad21f0')
 
 # Merchant Configuration
 MERCHANT_ID = os.getenv('MERCHANT_ID', "c4baf6ef23be73a2da7fa05********")
