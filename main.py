@@ -68,7 +68,7 @@ def run_poll():
     print("Bot polling!")
 
 
-if config.WEBHOOKMODE == "False":
+if config.WEBHOOKMODE != "False":
     run_poll()
 else:
     run_web()
