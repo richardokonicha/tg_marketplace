@@ -11,7 +11,7 @@ logging.basicConfig(
 )
 
 # Validate the most important variables
-required_variables = ['TOKEN', 'WEBHOOK_URL']
+required_variables = ['TOKEN', 'WEBHOOK_URL', 'BTCPAY_STORE_ID', 'BTCPAY_TOKEN']
 
 for variable in required_variables:
     if variable not in os.environ:
@@ -54,6 +54,10 @@ MERCHANT_PBKEY = os.getenv(
 IPN_URL = os.getenv(
     'IPN_URL', "https://5001-richardokon-upgradedfcx-82z3zmfnasf.ws-eu97.gitpod.io")
 PROXY = os.getenv('PROXY', 'http://proxy_ip:proxy_port')
+
+
+BTCPAY_STORE_ID = os.getenv('BTCPAY_STORE_ID')
+BTCPAY_TOKEN = os.getenv('BTCPAY_TOKEN')
 
 
 # Validation
