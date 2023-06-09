@@ -7,7 +7,6 @@ from .language import show_language, set_language
 from .deposits import promo
 from .menu import menu
 from .callback_answer import callback_answer
-from tgbot.utils.helpers import message_age_filter_func
 
 
 def register_handlers(bot):
