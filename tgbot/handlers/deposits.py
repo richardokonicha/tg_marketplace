@@ -3,7 +3,6 @@ from telebot import TeleBot
 from telebot.types import Message
 from tgbot.models import db
 from tgbot.payments import payment_client
-# from tgbot.utils.buttons import force_r, dashboard
 from tgbot.utils.messages import messages
 from .language import show_language
 from .start import start
