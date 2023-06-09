@@ -10,380 +10,417 @@ force_reply = types.ForceReply(input_field_placeholder="Enter value")
 
 
 def purchase_markup(user, purchases):
+    lang = user.language
+    translations = {
+        "en": {
+            "vendor_user": "Vendor" if user.is_vendor else "User",
+            "activity": "Your Purchase Activity",
+            "active": "♻️",
+            "inactive": "✔️",
+            "back_to_menu": "<<"
+        },
+        "ru": {
+            "vendor_user": "Продавец" if user.is_vendor else "Пользователь",
+            "activity": "Ваша активность покупок",
+            "active": "♻️",
+            "inactive": "✔️",
+            "back_to_menu": "<<"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{'Vendor' if user.is_vendor else 'User'}:Your Purchase Activity")
+        config.MENU_PHOTO, caption=f"{translation['vendor_user']}: {translation['activity']}")
 
     keys = []
 
     for purchase in purchases:
-        button_text = f"{purchase.get_created_at()}: {purchase.product_name} {'♻️' if purchase.active else '✔️'}"
-        keys.append(
-            [InlineKeyboardButton(
-                button_text, callback_data=f"purchase:{purchase.id}")]
-        )
-    keys.append(
-        [InlineKeyboardButton("<<", callback_data="back_to_menu")])
+        status = translation['active'] if purchase.active else translation['inactive']
+        button_text = f"{purchase.get_created_at()}: {purchase.product_name} {status}"
+        keys.append([InlineKeyboardButton(button_text, callback_data=f"purchase:{purchase.id}")])
+
+    keys.append([InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")])
+
     keyboard = InlineKeyboardMarkup(keys)
     return media, keyboard
 
 
-def menu_markup(user):
-    media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"🏦 Balance: {user.account_balance} BTC")
-    list_menu_keys = [
-        [InlineKeyboardButton(
-            "Products 🧶", callback_data="products")],
-        [InlineKeyboardButton(
-            "Website 🪐", url="https://queen.fugoku.com")],
-        [InlineKeyboardButton(
-            "Group 👥", url="https://t.me/followfootprintchat")],
-        [InlineKeyboardButton(
-            "Admin 👩‍🚀", url="https://t.me/@markyoku")],
-        [InlineKeyboardButton(
-            "Purchase 🪺", callback_data="purchase")]
-    ]
-    keyboard = InlineKeyboardMarkup(list_menu_keys)
-    return media, keyboard
+def view_product_markup(product, user):
+    lang = user.language
+    user_id = user.user_id
+    translations = {
+        "en": {
+            "mine": "My",
+            "view": "View",
+            "product_name": "Product Name:",
+            "price": "Price:",
+            "description": "Description:",
+            "delete": "Delete",
+            "buy": "Buy",
+            "cancel": "Cancel"
+        },
+        "ru": {
+            "mine": "Моё" if user_id == product.vendor_id else "Просмотр",
+            "view": "Просмотр",
+            "product_name": "Название продукта:",
+            "price": "Цена:",
+            "description": "Описание:",
+            "delete": "Удалить",
+            "buy": "Купить",
+            "cancel": "Отмена"
+        }
+    }
 
+    translation = translations[lang] if lang in translations else translations["en"]
 
-def view_product_markup(product, user_id):
     is_mine = user_id == product.vendor_id
     message_text = f"""
-        {'My' if is_mine else 'View'} Product:
+        {translation['mine']} Product:
         
-        <b>Product Name:</b> {product.name}
+        <b>{translation['product_name']}</b> {product.name}
         
-        💰 <b>Price:</b> {product.price}
+        💰 <b>{translation['price']}</b> {product.price}
         
-        📝 <b>Description:</b>
+        📝 <b>{translation['description']}</b>
         {product.description}
     """
 
-    button_text = "Delete" if is_mine else "Buy"
+    button_text = translation['delete'] if is_mine else translation['buy']
     button_callback = f"delete_product:{product.id}" if is_mine else f"buy_product:{product.id}"
 
     keyboard = [[
         InlineKeyboardButton(button_text, callback_data=button_callback),
-        InlineKeyboardButton("Cancel", callback_data="cancel")
+        InlineKeyboardButton(translation['cancel'], callback_data="cancel")
     ]]
 
     return message_text, InlineKeyboardMarkup(keyboard)
 
 
-def view_purchase_markup(purchase, user):
-    is_vendor = user.is_vendor
+def order_placed_markup(product, purchase, user):
+    lang = user.language
+    translations = {
+        "en": {
+            "order_placed": "Your order has been placed successfully! Thank you for shopping with us",
+            "order_id": "Order ID:",
+            "purchase_status": "Purchase Status:",
+            "product_name": "Product Name:",
+            "price": "Price:",
+            "description": "Description:",
+            "continue_shopping": "Continue Shopping"
+        },
+        "ru": {
+            "order_placed": "Ваш заказ успешно размещен! Спасибо за покупку",
+            "order_id": "ID заказа:",
+            "purchase_status": "Статус покупки:",
+            "product_name": "Название продукта:",
+            "price": "Цена:",
+            "description": "Описание:",
+            "continue_shopping": "Продолжить покупки"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
     message_text = f"""
-        {'View Orders' if is_vendor else 'My Orders'}:
+        {translation['order_placed']}
         
-        <b>User Name:</b> {purchase.buyer_username}
-        <b>User ID:</b> {purchase.buyer_id}
+        📦 <b>{translation['order_id']}</b> {purchase.id}
         
-        <b>Vendor ID:</b> {purchase.vendor_id}
-        <b>Vendor Username:</b> @{purchase.vendor_username}
+        📝 <b>{translation['purchase_status']}</b> {purchase.status}
+
+        <b>{translation['product_name']}</b> {product.name}
         
-        <b>User Address:</b> {purchase.address}
-        
-        <b>Product Name:</b> {purchase.product_name}
-        
-        💰 <b>Price:</b> {purchase.price}
-        
-        📝 <b>Description:</b>
-        {purchase.description}
+        💰 <b>{translation['price']}</b> {product.price}
+
+        📝 <b>{translation['description']}</b>
+        {product.description}
     """
 
-    if is_vendor:
-        button_text = "Completed"
-        button_callback = f"complete_purchase:{purchase.id}"
-        keyboard = [
-            [InlineKeyboardButton(button_text, callback_data=button_callback)],
-            [InlineKeyboardButton("Cancel", callback_data="cancel")]
-        ]
-    else:
-        button_text = "Cancel"
-        button_callback = "cancel"
-        keyboard = [[InlineKeyboardButton(
-            button_text, callback_data=button_callback)]]
-
-    return message_text, InlineKeyboardMarkup(keyboard)
-
-
-def order_placed_markup(product, purchase):
-    message_text = f"""
-        Your order has been placed successfully! Thank you for shopping with us
-        
-      📦 <b>Order ID:</b> {purchase.id}
-      
-      📝 <b>Purchase Status:</b> {purchase.status}
-
-      <b>Product Name:</b> {product.name}
-      
-      💰 <b>Price:</b> {product.price}
-
-      📝 <b>Description:</b>
-      {product.description}
-    """
     continue_button = InlineKeyboardButton(
-        "Continue Shopping", callback_data="continue_shopping")
+        translation['continue_shopping'], callback_data="continue_shopping")
     keyboard = [[continue_button]]
     return message_text, InlineKeyboardMarkup(keyboard)
 
 
 def all_products_markup(products, user):
+    lang = user.language
+    
+    translations = {
+        "en": {
+            "balance": f"🏦 Balance: {user.account_balance} BTC",
+            "back_to_menu": "<<"
+        },
+        "ru": {
+            "balance": f"🏦 Баланс: {user.account_balance} BTC",
+            "back_to_menu": "<<"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
     all_products_markup = []
-    media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"🏦 Balance  {user.account_balance} BTC")
+    media = InputMediaPhoto(config.MENU_PHOTO, caption=translation['balance'])
     for product in products:
-        all_products_markup.append(
-            [InlineKeyboardButton(
-                f'{product.name}', callback_data=f"view_product:{product.id}")]
-        )
-    all_products_markup.append(
-        [InlineKeyboardButton("<<", callback_data="back_to_menu")])
+        all_products_markup.append([
+            InlineKeyboardButton(
+                product.name, callback_data=f"view_product:{product.id}")
+        ])
+    all_products_markup.append([
+        InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")
+    ])
     return media, InlineKeyboardMarkup(all_products_markup)
 
 
-def get_create_product_keyboard(fields=None):
-    name = fields.get('name', 'Enter name') if fields else 'Enter name'
-    description = fields.get(
-        'description', 'Enter description') if fields else 'Enter description'
-    price = fields.get('price', 'Enter price') if fields else 'Enter price'
+
+def get_create_product_keyboard(user, fields=None):
+    lang = user.language
+    translations = {
+        "en": {
+            "name": "Name",
+            "description": "Description",
+            "price": "Price",
+            "back_to_menu": "<<",
+            "enter_name": "Enter name",
+            "enter_description": "Enter description",
+            "enter_price": "Enter price"
+        },
+        "ru": {
+            "name": "Название",
+            "description": "Описание",
+            "price": "Цена",
+            "back_to_menu": "<<",
+            "enter_name": "Введите название",
+            "enter_description": "Введите описание",
+            "enter_price": "Введите цену"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
+    name = fields.get('name', translation['enter_name']) if fields else translation['enter_name']
+    description = fields.get('description', translation['enter_description']) if fields else translation['enter_description']
+    price = fields.get('price', translation['enter_price']) if fields else translation['enter_price']
+
     create_product_keyboard = [
         [InlineKeyboardButton(
-            f"Name: {name}", callback_data="create_product:name")],
+            f"{translation['name']}: {name}", callback_data="create_product:name")],
         [InlineKeyboardButton(
-            f"Description: {description}", callback_data="create_product:description")],
+            f"{translation['description']}: {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"Price: {price}", callback_data="create_product:price")],
-        [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+            f"{translation['price']}: {price}", callback_data="create_product:price")],
+        [InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")]
     ]
+
     return InlineKeyboardMarkup(create_product_keyboard)
 
 
 def product_menu_markup(user):
+    translations = {
+        "en": {
+            "balance": "🏦 Balance",
+            "all_products": "All Products 🧶",
+            "vendor_products": "Vendor Products",
+            "create_product": "Create New Product",
+            "back_to_menu": "<<"
+        },
+        "ru": {
+            "balance": "🏦 Баланс",
+            "all_products": "Все товары 🧶",
+            "vendor_products": "Товары продавца",
+            "create_product": "Создать новый товар",
+            "back_to_menu": "<<"
+        }
+    }
+
+    lang = user.language if user.language in translations else "en"  # Default to English if language not available
+    translation = translations[lang]
+
     is_vendor = user.is_vendor
-    media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"🏦 Balance  {user.account_balance} BTC")
+    media = InputMediaPhoto(config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
+
     if is_vendor:
         keys = [
-            [InlineKeyboardButton(
-                "All Products 🧶", callback_data="all_products")],
-            [InlineKeyboardButton(
-                "Vendor Products", callback_data="vendor_products")],
-            [InlineKeyboardButton("Create New Product",
-                                  callback_data="create_product")],
-            [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+            [InlineKeyboardButton(translation["all_products"], callback_data="all_products")],
+            [InlineKeyboardButton(translation["vendor_products"], callback_data="vendor_products")],
+            [InlineKeyboardButton(translation["create_product"], callback_data="create_product")],
+            [InlineKeyboardButton(translation["back_to_menu"], callback_data="back_to_menu")]
         ]
     else:
         keys = [
-            [InlineKeyboardButton(
-                "All Products 🧶", callback_data="all_products")],
-            [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+            [InlineKeyboardButton(translation["all_products"], callback_data="all_products")],
+            [InlineKeyboardButton(translation["back_to_menu"], callback_data="back_to_menu")]
         ]
 
     keyboard = InlineKeyboardMarkup(keys)
     return media, keyboard
 
-# -------------
-
-
-force_reply = types.ForceReply(input_field_placeholder="Enter value")
-
-
 def menu_markup(user):
-    media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"🏦 Balance: {user.account_balance} BTC")
+    translations = {
+        "en": {
+            "balance": "🏦 Balance",
+            "products": "Products 🧶",
+            "website": "Website 🪐",
+            "group": "Group 👥",
+            "admin": "Admin 👩‍🚀",
+            "purchase": "Purchase 🪺"
+        },
+        "ru": {
+            "balance": "🏦 Баланс",
+            "products": "Продукты 🧶",
+            "website": "Сайт 🪐",
+            "group": "Группа 👥",
+            "admin": "Админ 👩‍🚀",
+            "purchase": "Покупка 🪺"
+        }
+    }
+
+    lang = user.language if user.language in translations else "en"  # Default to English if language not available
+    translation = translations[lang]
+
+    media = InputMediaPhoto(config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
     list_menu_keys = [
-        [InlineKeyboardButton(
-            "Products 🧶", callback_data="products")],
-        [InlineKeyboardButton(
-            "Website 🪐", url="https://queen.fugoku.com")],
-        [InlineKeyboardButton(
-            "Group 👥", url="https://t.me/followfootprintchat")],
-        [InlineKeyboardButton(
-            "Admin 👩‍🚀", url="https://t.me/@markyoku")],
-        [InlineKeyboardButton(
-            "Purchase 🪺", callback_data="purchase")]
+        [InlineKeyboardButton(translation["products"], callback_data="products")],
+        [InlineKeyboardButton(translation["website"], url="https://queen.fugoku.com")],
+        [InlineKeyboardButton(translation["group"], url="https://t.me/followfootprintchat")],
+        [InlineKeyboardButton(translation["admin"], url="https://t.me/@markyoku")],
+        [InlineKeyboardButton(translation["purchase"], callback_data="purchase")]
     ]
     keyboard = InlineKeyboardMarkup(list_menu_keys)
     return media, keyboard
 
-
-def view_product_markup(product, user_id):
-    is_mine = user_id == product.vendor_id
-    message_text = f"""
-        {'My' if is_mine else 'View'} Product:
-        
-        <b>Product Name:</b> {product.name}
-        
-        💰 <b>Price:</b> {product.price}
-        
-        📝 <b>Description:</b>
-        {product.description}
-    """
-
-    button_text = "Delete" if is_mine else "Buy"
-    button_callback = f"delete_product:{product.id}" if is_mine else f"buy_product:{product.id}"
-
-    keyboard = [[
-        InlineKeyboardButton(button_text, callback_data=button_callback),
-        InlineKeyboardButton("Cancel", callback_data="cancel")
-    ]]
-
-    return message_text, InlineKeyboardMarkup(keyboard)
-
-
 def view_purchase_markup(purchase, user):
+    lang = user.language
+    
+    translations = {
+        "en": {
+            "view_orders": "View Orders",
+            "my_orders": "My Orders",
+            "user_name": "User Name:",
+            "user_id": "User ID:",
+            "vendor_id": "Vendor ID:",
+            "vendor_username": "Vendor Username:",
+            "user_address": "User Address:",
+            "product_name": "Product Name:",
+            "price": "Price:",
+            "description": "Description:",
+            "completed": "Completed",
+            "cancel": "Cancel"
+        },
+        "ru": {
+            "view_orders": "Просмотр заказов",
+            "my_orders": "Мои заказы",
+            "user_name": "Имя пользователя:",
+            "user_id": "ID пользователя:",
+            "vendor_id": "ID продавца:",
+            "vendor_username": "Имя пользователя продавца:",
+            "user_address": "Адрес пользователя:",
+            "product_name": "Название продукта:",
+            "price": "Цена:",
+            "description": "Описание:",
+            "completed": "Завершено",
+            "cancel": "Отмена"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
     is_vendor = user.is_vendor
     message_text = f"""
-        {'View Orders' if is_vendor else 'My Orders'}:
+        {translation['view_orders'] if is_vendor else translation['my_orders']}
         
-        <b>User Name:</b> {purchase.buyer_username}
-        <b>User ID:</b> {purchase.buyer_id}
+        <b>{translation['user_name']}</b> {purchase.buyer_username}
+        <b>{translation['user_id']}</b> {purchase.buyer_id}
         
-        <b>Vendor ID:</b> {purchase.vendor_id}
-        <b>Vendor Username:</b> @{purchase.vendor_username}
+        <b>{translation['vendor_id']}</b> {purchase.vendor_id}
+        <b>{translation['vendor_username']}</b> @{purchase.vendor_username}
         
-        <b>User Address:</b> {purchase.address}
+        <b>{translation['user_address']}</b> {purchase.address}
         
-        <b>Product Name:</b> {purchase.product_name}
+        <b>{translation['product_name']}</b> {purchase.product_name}
         
-        💰 <b>Price:</b> {purchase.price}
+        💰 <b>{translation['price']}</b> {purchase.price}
         
-        📝 <b>Description:</b>
+        📝 <b>{translation['description']}</b>
         {purchase.description}
     """
 
     if is_vendor:
-        button_text = "Completed"
+        button_text = translation['completed']
         button_callback = f"complete_purchase:{purchase.id}"
         keyboard = [
             [InlineKeyboardButton(button_text, callback_data=button_callback)],
-            [InlineKeyboardButton("Cancel", callback_data="cancel")]
+            [InlineKeyboardButton(translation['cancel'], callback_data="cancel")]
         ]
     else:
-        button_text = "Cancel"
+        button_text = translation['cancel']
         button_callback = "cancel"
         keyboard = [[InlineKeyboardButton(
             button_text, callback_data=button_callback)]]
 
     return message_text, InlineKeyboardMarkup(keyboard)
 
+def get_create_product_keyboard(user, fields=None):
+    lang = user.language
+    translations = {
+        "en": {
+            "name": "Name:",
+            "description": "Description:",
+            "price": "Price:",
+            "back_to_menu": "<<"
+        },
+        "ru": {
+            "name": "Название:",
+            "description": "Описание:",
+            "price": "Цена:",
+            "back_to_menu": "<<"
+        }
+    }
 
-def order_placed_markup(product, purchase):
-    message_text = f"""
-        Your order has been placed successfully! Thank you for shopping with us
-        
-      📦 <b>Order ID:</b> {purchase.id}
-      
-      📝 <b>Purchase Status:</b> {purchase.status}
+    translation = translations[lang] if lang in translations else translations["en"]
 
-      <b>Product Name:</b> {product.name}
-      
-      💰 <b>Price:</b> {product.price}
-
-      📝 <b>Description:</b>
-      {product.description}
-    """
-    continue_button = InlineKeyboardButton(
-        "Continue Shopping", callback_data="continue_shopping")
-    keyboard = [[continue_button]]
-    return message_text, InlineKeyboardMarkup(keyboard)
-
-
-def all_products_markup(products, user):
-    all_products_markup = []
-    media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"🏦 Balance  {user.account_balance} BTC")
-    for product in products:
-        all_products_markup.append(
-            [InlineKeyboardButton(
-                f'{product.name}', callback_data=f"view_product:{product.id}")]
-        )
-    all_products_markup.append(
-        [InlineKeyboardButton("<<", callback_data="back_to_menu")])
-    return media, InlineKeyboardMarkup(all_products_markup)
-
-
-def get_create_product_keyboard(fields=None):
-    name = fields.get('name', 'Enter name') if fields else 'Enter name'
+    name = fields.get('name', translation['name']) if fields else translation['name']
     description = fields.get(
-        'description', 'Enter description') if fields else 'Enter description'
-    price = fields.get('price', 'Enter price') if fields else 'Enter price'
+        'description', translation['description']) if fields else translation['description']
+    price = fields.get('price', translation['price']) if fields else translation['price']
     create_product_keyboard = [
         [InlineKeyboardButton(
-            f"Name: {name}", callback_data="create_product:name")],
+            f"{translation['name']} {name}", callback_data="create_product:name")],
         [InlineKeyboardButton(
-            f"Description: {description}", callback_data="create_product:description")],
+            f"{translation['description']} {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"Price: {price}", callback_data="create_product:price")],
-        [InlineKeyboardButton("<<", callback_data="back_to_menu")]
+            f"{translation['price']} {price}", callback_data="create_product:price")],
+        [InlineKeyboardButton(translation['back_to_menu'], callback_data="back_to_menu")]
     ]
     return InlineKeyboardMarkup(create_product_keyboard)
 
 
-# ---------
-product_keyboard = [
-    [InlineKeyboardButton("All Products 🧶", callback_data="all_products")],
-    [InlineKeyboardButton("Vendor Products", callback_data="vendor_products")],
-    [InlineKeyboardButton("Create New Product",
-                          callback_data="create_product")],
-    [InlineKeyboardButton("<<", callback_data="back_to_menu")]
-]
-product_menu_markup = InlineKeyboardMarkup(product_keyboard)
-# ---------------
-
-# -----------
-products_button = InlineKeyboardButton("Products 🧶", callback_data="products")
-admin_button = InlineKeyboardButton("Admin 👩‍🚀", url="https://t.me/@markyoku")
-clearnet_button = InlineKeyboardButton(
-    "Website 🪐", url="https://queen.fugoku.com")
-group_chat_button = InlineKeyboardButton(
-    "Group 👥", url="https://t.me/followfootprintchat")
-purchase_button = InlineKeyboardButton("Purchase 🪺", callback_data="purchase")
-
-inline_keyboard = [
-    [products_button],
-    [clearnet_button],
-    [group_chat_button],
-    [admin_button],
-    [purchase_button]
-]
-list_menu_keys = InlineKeyboardMarkup(inline_keyboard)
-
-# ---------
-
-
-# ----- Menu Button
-passive_markup = {
-    "en": [
-        ["𓀉 Menu"],
-    ],
-    "it": [
-        ["𓀉 Menu"],
-    ]
-}
-en_passive_keys = types.ReplyKeyboardMarkup(
-    resize_keyboard=True, input_field_placeholder="View Menu")
-it_passive_keys = types.ReplyKeyboardMarkup(
-    resize_keyboard=True, input_field_placeholder="View Menu")
-passive_menu = {
-    "en": en_passive_keys,
-    "it": it_passive_keys
-}
-en_passive_keys.keyboard = passive_markup.get("en")
-it_passive_keys.keyboard = passive_markup.get("it")
-
-# -----
+def passive_menu(lang):
+    passive_markup = {
+        "en": [
+            ["𓀉 Menu"],
+        ],
+        "ru": [
+            ["𓀉 Меню"],
+        ]
+    }
+    passive_keys = types.ReplyKeyboardMarkup(
+        resize_keyboard=True, input_field_placeholder="View Menu")
+    passive_keys.keyboard = passive_markup.get(lang, passive_markup["en"])
+    return passive_keys
 
 
 # ------- Language
-select_lang_markup = [
-    ["English  🇬🇧", "Italiano  🇮🇹"]
-]
-lang_keys = types.ReplyKeyboardMarkup(
-    resize_keyboard=True,
-    one_time_keyboard=True
-)
-lang_keys.keyboard = select_lang_markup
+
+def lang_keys():
+    select_lang_markup = [
+        ["English  🇬🇧", "Русский 🇷🇺"]
+    ]
+    lang_keys = types.ReplyKeyboardMarkup(
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+    lang_keys.keyboard = select_lang_markup
+    return lang_keys
 
 # --------
