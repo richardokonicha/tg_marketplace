@@ -6,15 +6,16 @@ from tgbot.utils.messages import messages
 from tgbot.models import db
 from .start import start
 
+
 def show_language(message: Message, bot: TeleBot):
     chat_id = message.chat.id
     select_preferred_lang = messages["select_preferred_lang"]
     bot.send_message(
-            chat_id,
-            text=select_preferred_lang,
-            reply_markup=lang_keys,
-            parse_mode="HTML"
-            )
+        chat_id,
+        text=select_preferred_lang,
+        reply_markup=lang_keys(),
+    )
+
 
 def set_language(message: Message, bot: TeleBot):
     """sets language and returns language value and send user confirmation message"""
@@ -23,7 +24,7 @@ def set_language(message: Message, bot: TeleBot):
     language = None
     if message_lang == "ENGLISH":
         language = 'en'
-    if message_lang == "ITALIANO":
-        language = "it"
+    if message_lang == "РУССКИЙ":
+        language = "ru"
     db.set_language(user_id, language)
     start(message, bot)
