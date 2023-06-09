@@ -1,0 +1,59 @@
+import requests
+from tgbot import config
+
+
+class BtcPay:
+    def __init__(self, store_id, token):
+        self.store_id = store_id
+        self.token = token
+        self.url = 'https://testnet.demo.btcpayserver.org'
+
+    def create_invoice(self, amount: float, description: str, **kwargs) -> dict | None:
+        "Creates a new btcpay invoice"
+        try:
+            checkout_data = {
+                'metadata': {
+                    'description': description
+                },
+                'checkout': {
+                    'speedPolicy': "HighSpeed",
+                    'paymentMethods': ["BTC"],
+                    'defaultPaymentMethod': "BTC",
+                    'expirationMinutes': 90,
+                    'monitoringMinutes': 90,
+                    'paymentTolerance': 100,
+                    'redirectAutomatically': True,
+                    'requiresRefundEmail': True,
+                    'checkoutType': None,
+                    'defaultLanguage': "en",
+                },
+                'receipt': {
+                    'enabled': True,
+                    'showQR': None,
+                    'showPayments': None,
+                },
+                'amount': amount,
+                'currency': 'BTC',
+            }
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"token {self.token}"
+            }
+            url = f'{self.url}/api/v1/stores/{self.store_id}/invoices'
+
+            req = requests.post(url=url, json=checkout_data,
+                                headers=headers, **kwargs)
+
+            print(req)
+            print("New invoice created")
+
+            return req.json()
+
+        except Exception as e:
+            print(e)
+            return "Error creating an invoice"
+
+    def get_invoice(self, invoice_id: str) -> dict | None:
+        "Fetch a specific invoice"
+        pass
