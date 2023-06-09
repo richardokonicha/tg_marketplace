@@ -18,18 +18,18 @@ def start(message: Message, bot: TeleBot):
 
     if user is not None:
         lang = user.language
-        if lang == None or lang not in ['en', 'it']:
+        if lang == None or lang not in ['en', 'ru']:
             bot.send_message(
                 chat_id,
                 text=select_preferred_lang,
-                reply_markup=lang_keys,
+                reply_markup=lang_keys(),
                 parse_mode="HTML"
             )
         else:
             bot.send_message(
                 chat_id,
                 text=welcome_text[lang],
-                reply_markup=passive_menu[lang],
+                reply_markup=passive_menu(lang),
                 parse_mode="HTML"
             )
     else:
@@ -41,6 +41,6 @@ def start(message: Message, bot: TeleBot):
         bot.send_message(
             chat_id,
             text=select_preferred_lang,
-            reply_markup=lang_keys,
+            reply_markup=lang_keys(),
             parse_mode="HTML"
         )
