@@ -1,11 +1,7 @@
-from .coinpayment import CoinPayments
+from .btcpay import BtcPay
 from tgbot import config
 
-payment_client = CoinPayments(
-    config.MERCHANT_PBKEY,
-    config.MERCHANT_PKEY,
-    ipn_url=config.IPN_URL + "pay",
-    proxy=config.PROXY
+payment_client = BtcPay(
+    config.BTCPAY_STORE_ID,
+    config.BTCPAY_TOKEN
 )
-
-# response = payment_client.irequest('post', **params)
