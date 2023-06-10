@@ -7,9 +7,14 @@ from .language import show_language, set_language
 from .deposits import promo
 from .menu import menu
 from .callback_answer import callback_answer
+from .payment_webhook import process_merchant_webhook
 
 
-def register_handlers(bot):
+def register_handlers(bot, server):
+
+    server.add_url_rule('/pay', 'process_payment',
+                        lambda: process_merchant_webhook(bot), methods=['POST', 'GET'])
+
     bot.register_message_handler(
         admin_user, commands=['startadmin'], admin=True, pass_bot=True)
     bot.register_message_handler(

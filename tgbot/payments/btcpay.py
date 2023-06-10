@@ -6,21 +6,22 @@ class BtcPay:
     def __init__(self, store_id, token):
         self.store_id = store_id
         self.token = token
-        self.url = 'https://testnet.demo.btcpayserver.org'
+        self.url = config.BTCPAY_SERVER
 
-    def create_invoice(self, amount: float, description: str, **kwargs) -> dict | None:
+    def create_invoice(self, amount: float, description: str, user_id: str, currency: str = config.CURRENCY, **kwargs) -> dict | None:
         "Creates a new btcpay invoice"
         try:
             checkout_data = {
                 'metadata': {
-                    'description': description
+                    'description': description,
+                    'user_id': user_id,
                 },
                 'checkout': {
                     'speedPolicy': "HighSpeed",
-                    'paymentMethods': ["BTC"],
-                    'defaultPaymentMethod': "BTC",
-                    'expirationMinutes': 90,
-                    'monitoringMinutes': 90,
+                    'paymentMethods': [config.CURRENCY],
+                    'defaultPaymentMethod': config.CURRENCY,
+                    'expirationMinutes': config.INVOICE_EXPIRATION_MINUTES,
+                    'monitoringMinutes': config.INVOICE_EXPIRATION_MINUTES,
                     'paymentTolerance': 100,
                     'redirectAutomatically': True,
                     'requiresRefundEmail': True,
@@ -33,7 +34,7 @@ class BtcPay:
                     'showPayments': None,
                 },
                 'amount': amount,
-                'currency': 'BTC',
+                'currency': currency,
             }
 
             headers = {
