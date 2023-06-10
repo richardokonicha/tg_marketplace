@@ -1,3 +1,5 @@
+from tgbot import config
+
 messages = {
     "select_preferred_lang": """
 Please select your language
@@ -35,8 +37,8 @@ Andate a <b>Deposito</b> per aggiungere fondi.
     },
 
     "markup_balances": {
-        "en": "🏦 Balance  {account_balance} BTC",
-        "ru": "🏦 Баланс {account_balance} BTC"
+        "en": "🏦 Balance  {account_balance} {config.CURRENCY}",
+        "ru": "🏦 Баланс {account_balance} {config.CURRENCY}"
     },
 
 
@@ -96,11 +98,10 @@ https://t.me/{bot_name}?start={user_id}
     "withdrawal_info": {
         "en": f"""
 You can create a payout request any time, depending on your account balance.
-Minimum amount to withdraw is 0.002 BTC.
         """,
         "ru": f"""
 E’ possibile fare una richiesta di pagamento in qualsiasi momento, a seconda del saldo del Vostro conto.
-L’importo minimo di prelievo è di 0,002 BTC.
+L’importo minimo di prelievo è di 0,002 {config.CURRENCY}.
         """
     },
     "insufficient_funds": {
@@ -113,8 +114,8 @@ Non avete abbastanza fondi per creare una richiesta di pagamento.
     },
 
     "set_wallet_address_text": {
-        'en': "<b>Set your BTC wallet address</b>",
-        'it': "<b>Imposta l'indirizzo del tuo portafoglio BTC</b>"
+        'en': "<b>Set your {config.CURRENCY} wallet address</b>",
+        'it': "<b>Imposta l'indirizzo del tuo portafoglio {config.CURRENCY}</b>"
     },
 
     "invalid_amount": {
