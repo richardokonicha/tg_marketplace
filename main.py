@@ -8,23 +8,11 @@ from tgbot.handlers import register_handlers
 from tgbot.middlewares.antiflood_middleware import antispam_func
 from tgbot.models import db
 
-
 apihelper.ENABLE_MIDDLEWARE = True
 
 server = Flask(__name__, template_folder='tgbot/templates')
 bot = TeleBot(config.TOKEN, num_threads=5)
-
-
-@bot.message_handler(commands=['test'])
-def test(message):
-    """
-    You can create a function and use parameter pass_bot.
-    """
-    bot.send_message(message.chat.id, "Hello, testing !")
-
-
-register_handlers(bot)
-
+register_handlers(bot, server)
 bot.register_middleware_handler(antispam_func, update_types=['message'])
 bot.add_custom_filter(AdminFilter())
 
@@ -34,6 +22,8 @@ def checkWebhook():
     bot.process_new_updates(
         [telebot_types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "Your bot application is still active!", 200
+
+# server.add_url_rule()
 
 
 @server.route('/dashboard/')
@@ -68,7 +58,7 @@ def run_poll():
     print("Bot polling!")
 
 
-if config.WEBHOOKMODE != "False":
+if config.WEBHOOKMODE == "False":
     run_poll()
 else:
     run_web()
