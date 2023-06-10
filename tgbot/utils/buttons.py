@@ -9,6 +9,74 @@ from tgbot import config
 force_reply = types.ForceReply(input_field_placeholder="Enter value")
 
 
+def deposit_address_markup(user, invoice):
+    lang = user.language
+    invoice_id = invoice['id']
+    invoice_link = invoice['checkoutLink']
+    invoice_amount = invoice['amount']
+    invoice_currency = invoice['currency']
+    # qr_code = invoice['receipt']['showQR']
+    # description = invoice['metadata']['description']
+    translations = {
+        "en": {
+            "deposit_address_text": f"""
+Invoice Created: {invoice_id}
+
+You're depositing {invoice_amount} {invoice_currency}
+Please proceed with the payment by clicking Pay now
+
+Make sure to complete the payment of {invoice_amount} {invoice_currency} within the provided expiration time.
+                """,
+            "address_arrival": """Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
+            "back_to_menu": "<<",
+            "pay": "💰Pay now"
+        },
+        "ru": {
+            "deposit_address_text": f"""
+Счет-фактура создан: {invoice_id}
+
+Вы вносите {invoice_amount} {invoice_currency}
+Пожалуйста, продолжите оплату, нажав «Оплатить сейчас»
+
+Убедитесь, что вы завершили платеж {invoice_amount} {invoice_currency} в течение указанного срока действия.
+                """,
+            "address_arrival": f"""Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
+            "back_to_menu": "<<",
+            "pay": "💰Оплатить сейчас"
+        }
+    }
+    translation = translations[lang] if lang in translations else translations["en"]
+    deposite_text = translation['deposit_address_text']
+    keyboard = [[
+        InlineKeyboardButton(translation['pay'], url=invoice_link),
+        InlineKeyboardButton("Cancel", callback_data="cancel"),
+    ]]
+    return deposite_text, InlineKeyboardMarkup(keyboard)
+
+
+def deposit_markup(user):
+    lang = user.language
+    translations = {
+        "en": {
+            "balance_text": f"Balance is {user.account_balance}",
+            "deposit_text": """<b>Enter the amount you wish to deposit (min: 0.000025 LTC max: 5 LTC)</b>""",
+            "back_to_menu": "<<",
+            "inputholder": "Enter value"
+        },
+        "ru": {
+            "balance_text": f"Balance is {user.account_balance}",
+            "deposit_text": """Введите сумму, которую вы хотите внести (мин.: 0.000025 LTC max: 5 LTC)""",
+            "back_to_menu": "<<",
+            "inputholder": "Enter value"
+        }
+    }
+    translation = translations[lang] if lang in translations else translations["en"]
+    force_reply = types.ForceReply(
+        input_field_placeholder=translation['inputholder'])
+    deposite_text = translation['deposit_text']
+    return deposite_text, force_reply
+
+
 def purchase_markup(user, purchases):
     lang = user.language
     translations = {
@@ -150,11 +218,11 @@ def all_products_markup(products, user):
 
     translations = {
         "en": {
-            "balance": f"🏦 Balance: {user.account_balance} BTC",
+            "balance": f"🏦 Balance: {user.account_balance} {config.CURRENCY}",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": f"🏦 Баланс: {user.account_balance} BTC",
+            "balance": f"🏦 Баланс: {user.account_balance} {config.CURRENCY}",
             "back_to_menu": "<<"
         }
     }
@@ -239,13 +307,12 @@ def product_menu_markup(user):
         }
     }
 
-    # Default to English if language not available
     lang = user.language if user.language in translations else "en"
     translation = translations[lang]
 
     is_vendor = user.is_vendor
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
 
     if is_vendor:
         keys = [
@@ -278,7 +345,9 @@ def menu_markup(user):
             "website": "Website 🪐",
             "group": "Group 👥",
             "admin": "Admin 👩‍🚀",
-            "purchase": "Purchase 🪺"
+            "purchase": "Purchase 🪺",
+            "deposit": "Deposit"
+
         },
         "ru": {
             "balance": "🏦 Баланс",
@@ -286,7 +355,8 @@ def menu_markup(user):
             "website": "Сайт 🪐",
             "group": "Группа 👥",
             "admin": "Админ 👩‍🚀",
-            "purchase": "Покупка 🪺"
+            "purchase": "Покупка 🪺",
+            "deposit": "Deposit"
         }
     }
 
@@ -295,7 +365,7 @@ def menu_markup(user):
     translation = translations[lang]
 
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} BTC")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
     list_menu_keys = [
         [InlineKeyboardButton(translation["products"],
                               callback_data="products")],
@@ -303,7 +373,9 @@ def menu_markup(user):
         [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
         [InlineKeyboardButton(translation["admin"], url=config.ADMIN_USER)],
         [InlineKeyboardButton(translation["purchase"],
-                              callback_data="purchase")]
+                              callback_data="purchase")],
+        [InlineKeyboardButton(translation["deposit"],
+                              callback_data="create_deposit")]
     ]
     keyboard = InlineKeyboardMarkup(list_menu_keys)
     return media, keyboard

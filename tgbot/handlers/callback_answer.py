@@ -4,6 +4,7 @@ from tgbot.utils import buttons
 from tgbot.utils.messages import messages
 from tgbot.models import db
 from tgbot import config
+from tgbot.handlers.deposits import deposit
 from tgbot.handlers.product import save_product_value, buy_product, delete_product, view_product, view_all_products, view_vendor_products
 from telebot.types import InputMediaPhoto
 from tgbot.handlers.menu import back_to_menu, exit_view
@@ -31,6 +32,9 @@ def callback_answer(call, **kwargs):
             media=media,
             reply_markup=keyboard,
         )
+    elif call.data == "create_deposit":
+        deposit(call.message, bot)
+
     elif call.data == "continue_shopping":
         exit_view(call, bot)
 
