@@ -9,6 +9,7 @@ from tgbot.handlers.product import save_product_value, buy_product, delete_produ
 from telebot.types import InputMediaPhoto
 from tgbot.handlers.menu import back_to_menu, exit_view
 from tgbot.handlers.purchase import view_purchase, vendor_purchase_orders
+from tgbot.handlers.start import start
 
 
 logging.basicConfig(level=logging.INFO)
@@ -16,12 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 def callback_answer(call, **kwargs):
+    bot = kwargs.get('bot')
     chat_id = call.message.chat.id
     user_id = call.from_user.id
     message_id = call.message.message_id
     message = call.message
     user = db.get_user(user_id)
-    bot = kwargs.get('bot')
+    if user == None:
+        return start(message, bot)
 
     if call.data == "products":
         logger.info(f"User {user_id} requested to view products")
