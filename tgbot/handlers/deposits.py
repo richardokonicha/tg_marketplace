@@ -109,6 +109,8 @@ def deposit(message: Message, bot: TeleBot):
     user_id = message.from_user.id
     chat_id = message.chat.id
     user = db.get_user(user_id)
+    if user == None:
+        return start(message, bot)
     balance = user.account_balance
     lang = user.language
     message_id = message.message_id
