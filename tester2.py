@@ -1,12 +1,7 @@
-# Using database
-# from tgbot.models import db
-# newuser = db.create_user("777", "Pascal")
-# old_user = db.get_user("777")
-# print(old_user)
-
-# Create a new deposit
 from tgbot.models.model import Deposit
 from tgbot.models import db
+from datetime import datetime
+
 
 
 old_user = db.get_user(1053579181)
@@ -19,7 +14,8 @@ deposit = Deposit(
     amount=100.0,
     amount_received="123.45",
     event_type="created",
-    status="pending"
+    status="pending",
+    updated_at=datetime.fromtimestamp(1686537280 / 1000)
 )
 deposit.save()
 

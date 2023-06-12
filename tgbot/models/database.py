@@ -1,8 +1,10 @@
 import mongoengine
 import certifi
-from tgbot.models.model import User, Product, Purchase
+from tgbot.models.model import User, Product, Purchase, Deposit
 from tgbot import config
 from typing import List
+from decimal import Decimal
+from datetime import datetime
 
 mongoengine.connect(db=config.DB_NAME,
                     host=config.DATABASE_URL, tlsCAFile=certifi.where())
@@ -31,6 +33,16 @@ class Database:
         user = User.objects(user_id=user_id).first()
         if user:
             user.language = language
+            user.save()
+            return user
+        return None
+    
+    @staticmethod
+    def update_balance(user_id, payment):
+        user = User.objects(user_id=user_id).first()
+        new_balance = user.account_balance + payment
+        if user:
+            user.account_balance = new_balance
             user.save()
             return user
         return None
@@ -139,3 +151,40 @@ class Database:
             setattr(purchase, key, value)
         purchase.save()
         return purchase
+
+    @staticmethod
+    def create_deposit(user: User,  invoice_id: str, user_id: int, message_id: str, amount: Decimal, event_type: str, status: str) -> Deposit:
+        deposit = Deposit(
+            user=user,
+            invoice_id=invoice_id,
+            user_id=user_id,
+            message_id=message_id,
+            amount=amount,
+            event_type=event_type,
+            status=status,
+        )
+        deposit.save()
+        return deposit
+
+    @staticmethod
+    def update_deposit(deposit: Deposit, **kwargs) -> Deposit:
+        for key, value in kwargs.items():
+            setattr(deposit, key, value)
+        deposit.save()
+        return deposit
+
+    @staticmethod
+    def update_deposit_by_invoice_id(invoice_id: str, **kwargs) -> Deposit:
+        deposit = Deposit.objects(invoice_id=invoice_id).first()
+        if deposit:
+            for key, value in kwargs.items():
+                if key == 'updated_at':
+                    value = datetime.fromtimestamp(value / 1000)
+                setattr(deposit, key, value)
+            deposit.save()
+        return deposit
+    
+    @staticmethod
+    def get_deposit_by_invoice_id(invoice_id: str) -> Deposit:
+        deposit = Deposit.objects(invoice_id=invoice_id).first()
+        return deposit
