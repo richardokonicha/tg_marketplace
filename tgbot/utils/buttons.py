@@ -8,6 +8,15 @@ from tgbot import config
 
 force_reply = types.ForceReply(input_field_placeholder="Enter value")
 
+expired_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Expired", callback_data="expired")]])
+created_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Created", callback_data="created")]])
+
+def editted_reply(text):
+    return InlineKeyboardMarkup(
+        [
+        [InlineKeyboardButton(text=f"Invoice {text}", callback_data=f"{text}")] 
+        ]
+    )
 
 def deposit_address_markup(user, invoice):
     lang = user.language
@@ -16,7 +25,6 @@ def deposit_address_markup(user, invoice):
     invoice_amount = invoice['amount']
     invoice_currency = invoice['currency']
     # qr_code = invoice['receipt']['showQR']
-    # description = invoice['metadata']['description']
     translations = {
         "en": {
             "deposit_address_text": f"""
@@ -59,13 +67,13 @@ def deposit_markup(user):
     translations = {
         "en": {
             "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": """<b>Enter the amount you wish to deposit (min: 0.000025 LTC max: 5 LTC)</b>""",
+            "deposit_text": f"""<b>Enter the amount you wish to deposit (min: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY})</b>""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
         },
         "ru": {
             "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": """Введите сумму, которую вы хотите внести (мин.: 0.000025 LTC max: 5 LTC)""",
+            "deposit_text": f"""Введите сумму, которую вы хотите внести (мин.: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY} )""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
         }

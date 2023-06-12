@@ -25,7 +25,6 @@ def checkWebhook():
 
 # server.add_url_rule()
 
-
 @server.route('/dashboard/')
 @server.route('/dashboard/<name>')
 def dashboard(name=None):
