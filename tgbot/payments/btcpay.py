@@ -1,6 +1,6 @@
 import requests
 from tgbot import config
-
+from decimal import Decimal
 
 class BtcPay:
     def __init__(self, store_id, token):
@@ -8,7 +8,12 @@ class BtcPay:
         self.token = token
         self.url = config.BTCPAY_SERVER
 
-    def create_invoice(self, amount: float, description: str, user_id: str, currency: str = config.CURRENCY, **kwargs) -> dict | None:
+    def create_invoice(self, 
+                       amount: Decimal, 
+                       description: str, 
+                       user_id: str, 
+                       currency: str = config.CURRENCY, 
+                       **kwargs) -> dict | None:
         "Creates a new btcpay invoice"
         try:
             checkout_data = {
@@ -33,10 +38,9 @@ class BtcPay:
                     'showQR': None,
                     'showPayments': None,
                 },
-                'amount': amount,
+                'amount': float(amount),
                 'currency': currency,
             }
-
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"token {self.token}"
@@ -45,12 +49,9 @@ class BtcPay:
 
             req = requests.post(url=url, json=checkout_data,
                                 headers=headers, **kwargs)
-
             print(req)
             print("New invoice created")
-
             return req.json()
-
         except Exception as e:
             print(e)
             return "Error creating an invoice"

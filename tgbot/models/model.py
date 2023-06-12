@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField
+from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField, ReferenceField
 from datetime import datetime
 
 
@@ -12,7 +12,7 @@ class User(Document):
     registered_date = DateTimeField(default=datetime.now)
     is_new_user = BooleanField(default=True)
     last_visited = DateTimeField()
-    account_balance = DecimalField(precision=6, default=0.00)
+    account_balance = DecimalField(precision=8, default=0.00)
 
     def exists(self):
         return User.objects(user_id=self.user_id).first() is not None
@@ -53,4 +53,22 @@ class Product(Document):
 
     meta = {
         'collection': 'products'
+    }
+
+
+class Deposit(Document):
+    user = ReferenceField('User', required=True)
+    invoice_id = StringField(unique=True)
+    user_id = IntField(default="created")
+    message_id = IntField(default="0") 
+    amount = DecimalField(required=True, precision=8)
+    amount_received = StringField(default="none")
+    event_type = StringField(default="created")
+    status = StringField(default="none")
+    created_at = DateTimeField(default=datetime.now)
+    updated_at = DateTimeField(default=datetime.now)
+
+    meta = {
+        'collection': 'deposits',
+        'datetime_format': 'iso8601'
     }
