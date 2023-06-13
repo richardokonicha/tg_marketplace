@@ -12,7 +12,7 @@ class User(Document):
     registered_date = DateTimeField(default=datetime.now)
     is_new_user = BooleanField(default=True)
     last_visited = DateTimeField()
-    account_balance = DecimalField(precision=8, default=0.00)
+    account_balance = DecimalField(precision=2, default=0.00)
 
     def exists(self):
         return User.objects(user_id=self.user_id).first() is not None
