@@ -2,6 +2,9 @@ from tgbot.models import db
 from tgbot.utils import buttons
 from tgbot import config
 from telebot.types import InputMediaPhoto
+from decimal import Decimal, InvalidOperation
+from telebot.apihelper import ApiException
+
 
 
 def delete_product(call, bot):
@@ -122,17 +125,34 @@ def save_product_value(message, **kwargs):
     fields = kwargs.get("fields")
     call = kwargs.get("call")
     value = kwargs.get("value")
+    user = kwargs.get("user")
     create_product_id = kwargs.get("create_product_id")
     user_id = message.from_user.id
     username = message.from_user.username
     chat_id = message.chat.id
-
-    fields[value] = message.text
-    bot.edit_message_reply_markup(
-        chat_id=chat_id,
-        message_id=create_product_id,
-        reply_markup=buttons.get_create_product_keyboard(fields),
-    )
+    message_text = message.text
+  
+    if value == "price":
+        try:
+            quant = Decimal(message_text)
+            message_text = quant.quantize(Decimal('0.00'))
+        except:
+            value = "error"
+            bot.send_message(
+                chat_id=chat_id, text="Invalid Price Enter Digits only")
+    
+    fields[value] = message_text
+    keyboard = buttons.get_create_product_keyboard(user, fields)
+    
+    try:
+        bot.edit_message_reply_markup(
+            chat_id=chat_id,
+            message_id=create_product_id,
+            reply_markup=keyboard,
+        )
+    except ApiException as e:
+        print(f"An error occurred: {e}")
+        pass
 
     try:
         bot.delete_message(chat_id=chat_id, message_id=message.message_id - 1)
@@ -151,7 +171,8 @@ def save_product_value(message, **kwargs):
             bot=bot,
             markup=markup,
             fields=fields,
-            call=call
+            call=call,
+            user=user
         )
     elif "description" not in fields:
         enter_description = bot.send_message(
@@ -164,7 +185,8 @@ def save_product_value(message, **kwargs):
             bot=bot,
             markup=markup,
             fields=fields,
-            call=call
+            call=call,
+            user=user
         )
     elif "price" not in fields:
         enter_price = bot.send_message(
@@ -177,7 +199,8 @@ def save_product_value(message, **kwargs):
             bot=bot,
             markup=markup,
             fields=fields,
-            call=call
+            call=call,
+            user=user
         )
     else:
         name = fields["name"]
@@ -187,11 +210,12 @@ def save_product_value(message, **kwargs):
         vendor_username = username
 
         db.create_product(name, description, price, vendor_id, vendor_username)
+        keyboard = buttons.get_create_product_keyboard(user, fields)
         bot.edit_message_media(
             chat_id=chat_id,
             message_id=create_product_id,
             media=InputMediaPhoto(
                 config.MENU_PHOTO, caption="Create New Product Created"),
-            reply_markup=buttons.get_create_product_keyboard(fields),
+            reply_markup=keyboard,
         )
         view_vendor_products(call, bot)

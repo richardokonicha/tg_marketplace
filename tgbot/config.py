@@ -31,6 +31,7 @@ GROUP_URL = os.getenv('GROUP_URL', 'https://t.me/followfootprintchat')
 ADMIN_USER = os.getenv('ADMIN_USER', "https://t.me/@markyoku")
 WEBSITE_URL = os.getenv('WEBSITE_URL', "https://queen.fugoku.com")
 CURRENCY = os.getenv('CURRENCY', "BTC")
+FIAT_CURRENCY = os.getenv('FIAT_CURRENCY', "USD")
 
 MAX_CALLBACK_AGE_MINUTES = 1
 MAX_MESSAGE_AGE_MINUTES = 1
