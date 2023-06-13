@@ -37,8 +37,8 @@ Andate a <b>Deposito</b> per aggiungere fondi.
     },
 
     "markup_balances": {
-        "en": "🏦 Balance  {account_balance} {config.CURRENCY}",
-        "ru": "🏦 Баланс {account_balance} {config.CURRENCY}"
+        "en": "🏦 Balance  {account_balance} {config.FIAT_CURRENCY}",
+        "ru": "🏦 Баланс {account_balance} {config.FIAT_CURRENCY}"
     },
 
 
@@ -101,7 +101,7 @@ You can create a payout request any time, depending on your account balance.
         """,
         "ru": f"""
 E’ possibile fare una richiesta di pagamento in qualsiasi momento, a seconda del saldo del Vostro conto.
-L’importo minimo di prelievo è di 0,002 {config.CURRENCY}.
+L’importo minimo di prelievo è di 0,002 {config.FIAT_CURRENCY}.
         """
     },
     "insufficient_funds": {

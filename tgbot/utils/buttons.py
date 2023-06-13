@@ -35,7 +35,6 @@ Please proceed with the payment by clicking Pay now
 
 Make sure to complete the payment of {invoice_amount} {invoice_currency} within the provided expiration time.
                 """,
-            "address_arrival": """Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
             "back_to_menu": "<<",
             "pay": "💰Pay now"
         },
@@ -48,7 +47,6 @@ Make sure to complete the payment of {invoice_amount} {invoice_currency} within 
 
 Убедитесь, что вы завершили платеж {invoice_amount} {invoice_currency} в течение указанного срока действия.
                 """,
-            "address_arrival": f"""Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
             "back_to_menu": "<<",
             "pay": "💰Оплатить сейчас"
         }
@@ -67,13 +65,13 @@ def deposit_markup(user):
     translations = {
         "en": {
             "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": f"""<b>Enter the amount you wish to deposit (min: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY})</b>""",
+            "deposit_text": f"""<b>Enter the amount you wish to deposit (min: 10 {config.FIAT_CURRENCY} max: 5,000,000 {config.FIAT_CURRENCY})</b>""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
         },
         "ru": {
             "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": f"""Введите сумму, которую вы хотите внести (мин.: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY} )""",
+            "deposit_text": f"""Введите сумму, которую вы хотите внести (мин.: 10 {config.FIAT_CURRENCY} max: 5,000,000 {config.FIAT_CURRENCY} )""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
         }
@@ -158,7 +156,7 @@ def view_product_markup(product, user):
         
         <b>{translation['product_name']}</b> {product.name}
         
-        💰 <b>{translation['price']}</b> {product.price}
+        💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
         
         📝 <b>{translation['description']}</b>
         {product.description}
@@ -209,7 +207,7 @@ def order_placed_markup(product, purchase, user):
 
         <b>{translation['product_name']}</b> {product.name}
         
-        💰 <b>{translation['price']}</b> {product.price}
+        💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
 
         📝 <b>{translation['description']}</b>
         {product.description}
@@ -226,11 +224,11 @@ def all_products_markup(products, user):
 
     translations = {
         "en": {
-            "balance": f"🏦 Balance: {user.account_balance} {config.CURRENCY}",
+            "balance": f"🏦 Balance: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": f"🏦 Баланс: {user.account_balance} {config.CURRENCY}",
+            "balance": f"🏦 Баланс: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         }
     }
@@ -289,7 +287,7 @@ def get_create_product_keyboard(user, fields=None):
         [InlineKeyboardButton(
             f"{translation['description']}: {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"{translation['price']}: {price}", callback_data="create_product:price")],
+            f"{translation['price']}: {price} {config.FIAT_CURRENCY}", callback_data="create_product:price")],
         [InlineKeyboardButton(translation['back_to_menu'],
                               callback_data="back_to_menu")]
     ]
@@ -300,17 +298,17 @@ def get_create_product_keyboard(user, fields=None):
 def product_menu_markup(user):
     translations = {
         "en": {
-            "balance": "🏦 Balance",
+            "balance": "Balance 💵 ",
             "all_products": "All Products 🧶",
-            "vendor_products": "Vendor Products",
-            "create_product": "Create New Product",
+            "vendor_products": "Vendor Products 📙",
+            "create_product": "Create New Product 🔎",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": "🏦 Баланс",
+            "balance": "Баланс 💵 ",
             "all_products": "Все товары 🧶",
-            "vendor_products": "Товары продавца",
-            "create_product": "Создать новый товар",
+            "vendor_products": "Товары продавца 📙",
+            "create_product": "Создать новый товар 🔎",
             "back_to_menu": "<<"
         }
     }
@@ -320,7 +318,7 @@ def product_menu_markup(user):
 
     is_vendor = user.is_vendor
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.FIAT_CURRENCY}")
 
     if is_vendor:
         keys = [
@@ -348,7 +346,7 @@ def product_menu_markup(user):
 def menu_markup(user):
     translations = {
         "en": {
-            "balance": "🏦 Balance",
+            "balance": "Balance 💵 ",
             "products": "Products 🧶",
             "website": "Website 🪐",
             "group": "Group 👥",
@@ -358,7 +356,7 @@ def menu_markup(user):
 
         },
         "ru": {
-            "balance": "🏦 Баланс",
+            "balance": "Баланс 💵 ",
             "products": "Продукты 🧶",
             "website": "Сайт 🪐",
             "group": "Группа 👥",
@@ -373,12 +371,12 @@ def menu_markup(user):
     translation = translations[lang]
 
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.FIAT_CURRENCY}")
     list_menu_keys = [
         [InlineKeyboardButton(translation["products"],
                               callback_data="products")],
-        [InlineKeyboardButton(translation["website"], url=config.WEBSITE_URL)],
-        [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
+        # [InlineKeyboardButton(translation["website"], url=config.WEBSITE_URL)],
+        # [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
         [InlineKeyboardButton(translation["admin"], url=config.ADMIN_USER)],
         [InlineKeyboardButton(translation["purchase"],
                               callback_data="purchase")],
@@ -439,7 +437,7 @@ def view_purchase_markup(purchase, user):
         
         <b>{translation['product_name']}</b> {purchase.product_name}
         
-        💰 <b>{translation['price']}</b> {purchase.price}
+        💰 <b>{translation['price']}</b> {purchase.price} {config.FIAT_CURRENCY}
         
         📝 <b>{translation['description']}</b>
         {purchase.description}
@@ -493,7 +491,7 @@ def get_create_product_keyboard(user, fields=None):
         [InlineKeyboardButton(
             f"{translation['description']} {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"{translation['price']} {price}", callback_data="create_product:price")],
+            f"{translation['price']} {price} {config.FIAT_CURRENCY}", callback_data="create_product:price")],
         [InlineKeyboardButton(translation['back_to_menu'],
                               callback_data="back_to_menu")]
     ]
@@ -515,8 +513,6 @@ def passive_menu(lang):
     return passive_keys
 
 
-# ------- Language
-
 def lang_keys():
     select_lang_markup = [
         ["English  🇬🇧", "Русский 🇷🇺"]
@@ -527,5 +523,3 @@ def lang_keys():
     )
     lang_keys.keyboard = select_lang_markup
     return lang_keys
-
-# --------

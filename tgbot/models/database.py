@@ -9,7 +9,6 @@ from datetime import datetime
 mongoengine.connect(db=config.DB_NAME,
                     host=config.DATABASE_URL, tlsCAFile=certifi.where())
 
-
 class Database:
     @staticmethod
     def get_user(user_id):
@@ -75,7 +74,7 @@ class Database:
         return products
 
     @staticmethod
-    def create_product(name: str, description: str, price: str, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
+    def create_product(name: str, description: str, price: Decimal, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
         product = Product(name=name, description=description,
                           price=price, category=category, vendor_id=vendor_id, vendor_username=vendor_username)
         product.save()
@@ -106,10 +105,8 @@ class Database:
         products = Product.objects()
         return products
 
-    # Purchase ------------------------
-
     @staticmethod
-    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: str, description: str) -> Purchase:
+    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str) -> Purchase:
         purchase = Purchase(
             user_id=user_id,
             buyer_username=buyer_username,
