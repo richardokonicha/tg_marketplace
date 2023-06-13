@@ -5,7 +5,7 @@ from tgbot.utils.messages import messages
 from tgbot.models import db
 from tgbot import config
 from tgbot.handlers.deposits import deposit
-from tgbot.handlers.product import save_product_value, buy_product, delete_product, view_product, view_all_products, view_vendor_products
+from tgbot.handlers.product import save_product_value, buy_product, delete_product, view_product, view_all_products, view_vendor_products, confirm_payment_method
 from telebot.types import InputMediaPhoto
 from tgbot.handlers.menu import back_to_menu, exit_view
 from tgbot.handlers.purchase import view_purchase, vendor_purchase_orders
@@ -57,10 +57,14 @@ def callback_answer(call, **kwargs):
         logger.info(f"User {user_id} requested to view a product")
         return view_product(call, bot)
 
+    elif call.data.startswith("confirm_payment:"):
+        logger.info(f"User {user_id} requested to view a confirm_payment_method")
+        confirm_payment_method(call, bot, user)
+
     elif call.data.startswith("buy_product:"):
-        logger.info(f"User {user_id} requested to buy a product")
+        logger.info(f"User {user_id} requested to buy a product {call.data}")
         buy_product(call, bot)
-        return bot.answer_callback_query(call.id, text="Purchase successful")
+        # return bot.answer_callback_query(call.id, text="Purchase successful")
 
     elif call.data.startswith("delete_product:"):
         logger.info(f"User {user_id} requested to Delete a product")

@@ -22,7 +22,6 @@ def checkWebhook():
     bot.process_new_updates(
         [telebot_types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "Your bot application is still active!", 200
-
 # server.add_url_rule()
 
 @server.route('/dashboard/')

@@ -37,8 +37,8 @@ Andate a <b>Deposito</b> per aggiungere fondi.
     },
 
     "markup_balances": {
-        "en": "🏦 Balance  {account_balance} {config.FIAT_CURRENCY}",
-        "ru": "🏦 Баланс {account_balance} {config.FIAT_CURRENCY}"
+        "en": "🏦 Wallet Balance  {account_balance} {config.FIAT_CURRENCY}",
+        "ru": "🏦 Wallet Баланс {account_balance} {config.FIAT_CURRENCY}"
     },
 
 
