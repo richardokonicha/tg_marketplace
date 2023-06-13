@@ -1,5 +1,6 @@
 from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField, ReferenceField
 from datetime import datetime
+from decimal import Decimal
 
 
 class User(Document):
@@ -12,7 +13,7 @@ class User(Document):
     registered_date = DateTimeField(default=datetime.now)
     is_new_user = BooleanField(default=True)
     last_visited = DateTimeField()
-    account_balance = DecimalField(precision=8, default=0.00)
+    account_balance = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
 
     def exists(self):
         return User.objects(user_id=self.user_id).first() is not None
@@ -30,7 +31,7 @@ class Purchase(Document):
     vendor_username = StringField(default="")
     product_id = ObjectIdField(default="")
     product_name = StringField(default="")
-    price = StringField(default="$")
+    price = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
     description = StringField(default="description")
     address = StringField(default="")
     active = BooleanField(default=True)
@@ -46,7 +47,7 @@ class Purchase(Document):
 class Product(Document):
     name = StringField(required=True)
     description = StringField(default="")
-    price = StringField(required=True)
+    price = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
     category = StringField(default="General")
     vendor_id = IntField(required=True)
     vendor_username = StringField(default="")
@@ -61,8 +62,8 @@ class Deposit(Document):
     invoice_id = StringField(unique=True)
     user_id = IntField(default="created")
     message_id = IntField(default="0") 
-    amount = DecimalField(required=True, precision=8)
-    amount_received = StringField(default="none")
+    amount = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
+    amount_received = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
     event_type = StringField(default="created")
     status = StringField(default="none")
     created_at = DateTimeField(default=datetime.now)

@@ -54,7 +54,7 @@ def register_handlers(bot, server):
         func=lambda message: message.content_type == "text"
         and (
             bool(re.search(r'Menu$', message.text, re.IGNORECASE)),
-            bool(re.search(r'Меню$', message.text, re.IGNORECASE))
+            bool(re.search(r'^Меню$', message.text, re.IGNORECASE))
         ),
         pass_bot=True
     )

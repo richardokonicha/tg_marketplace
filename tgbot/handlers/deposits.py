@@ -75,7 +75,8 @@ def generate_address(message, bot, **kwargs):
         invoice = payment_client.create_invoice(
             amount=amount,
             user_id=user_id,
-            description=f"Deposit of {amount} {config.CURRENCY} from {user.name}",
+            currency=config.FIAT_CURRENCY,
+            description=f"Deposit of {amount} {config.FIAT_CURRENCY} from {user.name}",
         )
 
         if 'code' in invoice and invoice['code'] == 'generic-error':

@@ -82,7 +82,7 @@ def callback_answer(call, **kwargs):
         enter_field_value = bot.send_message(
             chat_id=chat_id, text=f"Enter {field_name}", reply_markup=buttons.force_reply)
         return bot.register_next_step_handler(
-            enter_field_value, save_product_value, call=call, fields=fields, create_product_id=message_id, value=field_name, bot=bot)
+            enter_field_value, save_product_value, call=call, fields=fields, create_product_id=message_id, value=field_name, bot=bot, user=user)
 
     elif call.data == "purchase":
         logger.info(f"User {user_id} requested to view Purchase")
