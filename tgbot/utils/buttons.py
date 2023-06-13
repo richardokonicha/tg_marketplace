@@ -349,22 +349,23 @@ def menu_markup(user):
     translations = {
         "en": {
             "balance": "🏦 Balance",
-            "products": "Products 🧶",
-            "website": "Website 🪐",
-            "group": "Group 👥",
-            "admin": "Admin 👩‍🚀",
-            "purchase": "Purchase 🪺",
-            "deposit": "Deposit"
+            "deposit": "📥 Deposit",
+            "products": "📦 Products",
+            # "website": "Website 🪐",
+            # "group": "Group 👥",
+            # "admin": "Admin 👩‍🚀",
+            "purchase": "🗂️ Orders"
+            
 
         },
         "ru": {
             "balance": "🏦 Баланс",
-            "products": "Продукты 🧶",
-            "website": "Сайт 🪐",
-            "group": "Группа 👥",
-            "admin": "Админ 👩‍🚀",
-            "purchase": "Покупка 🪺",
-            "deposit": "Deposit"
+            "deposit": "📥 Deposit",
+            "products": "📦 Продукты",
+            # "website": "Сайт 🪐",
+            # "group": "Группа 👥",
+            # "admin": "Админ 👩‍🚀",
+            "purchase": "🗂️ Покупка"
         }
     }
 

@@ -109,6 +109,11 @@ class Database:
     # Purchase ------------------------
 
     @staticmethod
+    def get_all_purchases() -> List[Purchase]:
+        purchases = Purchase.objects()
+        return purchases
+
+    @staticmethod
     def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: str, description: str) -> Purchase:
         purchase = Purchase(
             user_id=user_id,
