@@ -9,6 +9,8 @@ from .start import start
 from tgbot import config
 from tgbot.utils import buttons
 from telebot.apihelper import ApiException
+from tgbot.handlers.menu import show_menu
+
 
 
 def handle_invoice_created_webhook(data, bot):
@@ -22,7 +24,6 @@ def handle_invoice_created_webhook(data, bot):
         print(f"An error occurred: {e}")
 
 
-
 def handle_invoice_paid_webhook(data, bot):
     deposit = db.update_deposit_by_invoice_id(
         invoice_id=data['invoiceId'], 
@@ -30,8 +31,10 @@ def handle_invoice_paid_webhook(data, bot):
         status="settled", 
         updated_at=data['timestamp'],
         )
-    payment = Decimal(data['payment']['value'])
-    db.update_balance(user_id=deposit.user_id, payment=payment)
+    if deposit.event_type == 'InvoicePaymentSettled':
+        payment = Decimal(data['payment']['value'])
+        user = db.update_balance(user_id=deposit.user_id, payment=deposit.amount)
+        show_menu(user, bot)
     try:
         bot.edit_message_reply_markup(chat_id=deposit.user_id, message_id=deposit.message_id, reply_markup=buttons.editted_reply("Settled"))
     except:

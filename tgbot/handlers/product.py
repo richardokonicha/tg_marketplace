@@ -4,6 +4,79 @@ from tgbot import config
 from telebot.types import InputMediaPhoto
 from decimal import Decimal, InvalidOperation
 from telebot.apihelper import ApiException
+from tgbot.payments import payment_client
+
+
+
+def generate_pay_vendor(message, bot, **kwargs):
+    chat_id = message.chat.id
+    user_id = message.from_user.id
+    bot.send_chat_action(chat_id, action="typing")
+
+    user = db.get_user(user_id)
+    promo = message.text.split(" ")[0]
+
+    try:
+        amount = Decimal(promo)
+        invoice = payment_client.create_invoice(
+            amount=amount,
+            user_id=user_id,
+            currency=config.FIAT_CURRENCY,
+            description=f"Deposit of {amount} {config.FIAT_CURRENCY} from {user.name}",
+        )
+
+        if 'code' in invoice and invoice['code'] == 'generic-error':
+            raise ValueError
+
+        deposit_text, keyboard = buttons.deposit_address_markup(user, invoice)
+        dmessage = bot.send_message(
+            chat_id,
+            text=deposit_text,
+            reply_markup=keyboard
+        )
+
+        db.create_deposit(
+            user=user,
+            invoice_id=invoice['id'],
+            user_id=user_id,
+            message_id=dmessage.id,
+            amount=invoice['amount'],
+            event_type=invoice['type'],
+            status=invoice['status']
+        )
+    except (ValueError, InvalidOperation):
+        bot.send_message(
+            chat_id,
+            text="Invalid amount",
+            # reply_markup=buttons.passive_menu(user.language)
+        )
+        
+        
+def pay_vendor_with_crypto(user, product, bot, call):
+    vendor_id = product.vendor_id
+    # value = generate_pay_vendor(call.message, bot)
+    
+    return True
+
+def pay_vendor_from_balance(user, product, bot, call):
+    vendor_id = product.vendor_id
+    vendor = db.get_user(user_id=vendor_id)
+    total_amount = product.price
+    if user.account_balance >= total_amount:
+        user.account_balance -= total_amount
+        vendor.account_balance += total_amount
+        user.save()
+        vendor.save()
+        return True
+    else:
+        try:
+            insufficient = f"Insufficient balance to make the payment: {str(user.account_balance)}"
+            bot.send_message(text=insufficient, chat_id=user.user_id)
+            bot.answer_callback_query(call.id, text=insufficient)
+        except:
+            pass
+        return False
+
 
 
 
@@ -26,12 +99,22 @@ def buy_product(call, bot):
     user_id = call.from_user.id
     message_id = call.message.message_id
     user = db.get_user(user_id)
-    product_id = call.data.split(":")[1]
+    data, payment_type, product_id= call.data.split(":")
     product = db.get_product_by_id(product_id)
+    
     if product == None:
+        bot.answer_callback_query(user.user_id, text=f"Product Unavailable {product.name}")
         bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
         return bot.answer_callback_query(call.id, text="Product Not Available")
-
+    
+    status = False
+    if payment_type == "pay_from_balance":
+        status = pay_vendor_from_balance(user, product, bot, call)
+    elif payment_type == "pay_with_crypto":
+        status = pay_vendor_with_crypto(user, product, bot, call)
+    if status != True:
+        return
+    
     purchase = db.create_purchase(
         user_id=user_id,
         buyer_username=user.username,
@@ -57,19 +140,22 @@ def buy_product(call, bot):
         parse_mode="HTML",
         reply_markup=keyboard,
     )
-
-    vendor_alert = f"""```
+    
+    vendor_notification = f"""
+    The buyer has paid {product.price}{config.FIAT_CURRENCY} to your account balance for the product {product.name}.
+    
     From User {user.name}
     Address:  {user.address}
     UserId:   {user.user_id}
     Username:  @{user.username}
         
     New Order:  {product.name} 
-    Price:       {product.price}
+    Price:       {product.price} {config.FIAT_CURRENCY}
     Description: {product.description}
-    ```
+    
     """
-    bot.send_message(text=vendor_alert, chat_id=vender_id)
+    delete_product = db.delete_product(product_id)
+    bot.send_message(text=vendor_notification, chat_id=vender_id)
 
 
 def view_vendor_products(call, bot):
@@ -85,6 +171,25 @@ def view_vendor_products(call, bot):
         media=media,
         reply_markup=keyboard,
     )
+    
+def confirm_payment_method(call, bot, user):
+    chat_id = call.message.chat.id
+    # user_id = call.from_user.id
+    # user = db.get_user(user_id)
+    message_id = call.message.id
+    product_id = call.data.split(":")[1]
+    product = db.get_product_by_id(product_id)
+    if product == None:
+        return bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
+    keyboard = buttons.payment_method(product, user)
+    bot.edit_message_reply_markup(chat_id=chat_id, message_id=message_id, reply_markup=keyboard)
+    
+    # bot.send_message(
+    #     chat_id=chat_id,
+    #     text=message_text,
+    #     parse_mode="HTML",
+    #     reply_markup=keyboard,
+    # )
 
 
 def view_product(call, bot):

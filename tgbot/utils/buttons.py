@@ -64,13 +64,13 @@ def deposit_markup(user):
     lang = user.language
     translations = {
         "en": {
-            "balance_text": f"Balance is {user.account_balance}",
+            "balance_text": f"Wallet Balance is {user.account_balance}",
             "deposit_text": f"""<b>Enter the amount you wish to deposit (min: 10 {config.FIAT_CURRENCY} max: 5,000,000 {config.FIAT_CURRENCY})</b>""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
         },
         "ru": {
-            "balance_text": f"Balance is {user.account_balance}",
+            "balance_text": f"Wallet Balance is {user.account_balance}",
             "deposit_text": f"""Введите сумму, которую вы хотите внести (мин.: 10 {config.FIAT_CURRENCY} max: 5,000,000 {config.FIAT_CURRENCY} )""",
             "back_to_menu": "<<",
             "inputholder": "Enter value"
@@ -122,6 +122,33 @@ def purchase_markup(user, purchases):
     return media, keyboard
 
 
+def payment_method(product, user):
+    lang = user.language
+    translations = {
+        "en": {
+            "cancel": "Cancel",
+            "pay_from_balance": "Pay from Balance",
+            "pay_with_crypto": "Pay with Crypto"
+        },
+        "ru": {
+            "cancel": "Отмена",
+            "pay_from_balance": "Оплатить с баланса",
+            "pay_with_crypto": "Оплатить с помощью криптовалюты"
+        },
+        "ge": {
+            "cancel": "გაუქმება",
+            "pay_from_balance": "გადახდა ბალანსიდან",
+            "pay_with_crypto": "გადახდა კრიპტოვალუტით"
+        }
+    }
+    translation = translations.get(lang, translations["en"])
+    pay_from_wallet = InlineKeyboardButton(translation['pay_from_balance'], callback_data=f"buy_product:pay_from_balance:{product.id}")
+    pay_direct = InlineKeyboardButton(translation['pay_with_crypto'], callback_data=f"buy_product:pay_with_crypto:{product.id}")
+    cancel = InlineKeyboardButton(translation['cancel'], callback_data="cancel")
+    keyboard = [[pay_from_wallet, pay_direct], [cancel]]
+    return InlineKeyboardMarkup(keyboard)
+
+
 def view_product_markup(product, user):
     lang = user.language
     user_id = user.user_id
@@ -134,7 +161,7 @@ def view_product_markup(product, user):
             "description": "Description:",
             "delete": "Delete",
             "buy": "Buy",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
         },
         "ru": {
             "mine": "Моё" if user_id == product.vendor_id else "Просмотр",
@@ -150,34 +177,31 @@ def view_product_markup(product, user):
 
     translation = translations[lang] if lang in translations else translations["en"]
 
-    is_mine = user_id == product.vendor_id
     message_text = f"""
-        {translation['mine']} Product:
-        
-        <b>{translation['product_name']}</b> {product.name}
-        
-        💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
-        
-        📝 <b>{translation['description']}</b>
-        {product.description}
+{translation['mine']} Product:
+
+<b>{translation['product_name']}</b> {product.name}
+
+💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
+
+📝 <b>{translation['description']}</b>
+{product.description}
     """
-
-    button_text = translation['delete'] if is_mine else translation['buy']
-    button_callback = f"delete_product:{product.id}" if is_mine else f"buy_product:{product.id}"
-
-    keyboard = [[
-        InlineKeyboardButton(button_text, callback_data=button_callback),
-        InlineKeyboardButton(translation['cancel'], callback_data="cancel")
-    ]]
-
-    return message_text, InlineKeyboardMarkup(keyboard)
+    is_mine = user_id == product.vendor_id
+    key = []
+    if is_mine:
+        key.append(InlineKeyboardButton(translation['delete'], callback_data=f"delete_product:{product.id}"))
+    else:
+        key.append(InlineKeyboardButton(translation['buy'], callback_data=f"confirm_payment:{product.id}"))
+    key.append(InlineKeyboardButton(translation['cancel'], callback_data="cancel"))
+    return message_text, InlineKeyboardMarkup([key])
 
 
 def order_placed_markup(product, purchase, user):
     lang = user.language
     translations = {
         "en": {
-            "order_placed": "Your order has been placed successfully! Thank you for shopping with us",
+            "order_placed": "You have successfully paid {product.price}{config.FIAT_CURRENCY} from your account balance for the product {product.name}.",
             "order_id": "Order ID:",
             "purchase_status": "Purchase Status:",
             "product_name": "Product Name:",
@@ -199,18 +223,18 @@ def order_placed_markup(product, purchase, user):
     translation = translations[lang] if lang in translations else translations["en"]
 
     message_text = f"""
-        {translation['order_placed']}
-        
-        📦 <b>{translation['order_id']}</b> {purchase.id}
-        
-        📝 <b>{translation['purchase_status']}</b> {purchase.status}
+{translation['order_placed'].format(product=product, config=config)}
 
-        <b>{translation['product_name']}</b> {product.name}
-        
-        💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
+📦 <b>{translation['order_id']}</b> {purchase.id}
 
-        📝 <b>{translation['description']}</b>
-        {product.description}
+📝 <b>{translation['purchase_status']}</b> {purchase.status}
+
+<b>{translation['product_name']}</b> {product.name}
+
+💰 <b>{translation['price']}</b> {product.price} {config.FIAT_CURRENCY}
+
+📝 <b>{translation['description']}</b>
+{product.description}
     """
 
     continue_button = InlineKeyboardButton(
@@ -224,11 +248,11 @@ def all_products_markup(products, user):
 
     translations = {
         "en": {
-            "balance": f"🏦 Balance: {user.account_balance} {config.FIAT_CURRENCY}",
+            "balance": f"🏦 Wallet Balance: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": f"🏦 Баланс: {user.account_balance} {config.FIAT_CURRENCY}",
+            "balance": f"🏦 Wallet Баланс: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         }
     }
@@ -298,14 +322,14 @@ def get_create_product_keyboard(user, fields=None):
 def product_menu_markup(user):
     translations = {
         "en": {
-            "balance": "Balance 💵 ",
+            "balance": "Wallet Balance 💵 ",
             "all_products": "All Products 🧶",
             "vendor_products": "Vendor Products 📙",
             "create_product": "Create New Product 🔎",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": "Баланс 💵 ",
+            "balance": "Wallet Баланс 💵 ",
             "all_products": "Все товары 🧶",
             "vendor_products": "Товары продавца 📙",
             "create_product": "Создать новый товар 🔎",
@@ -346,7 +370,7 @@ def product_menu_markup(user):
 def menu_markup(user):
     translations = {
         "en": {
-            "balance": "Balance 💵 ",
+            "balance": "Wallet Balance 💵 ",
             "products": "Products 🧶",
             "website": "Website 🪐",
             "group": "Group 👥",
@@ -356,7 +380,7 @@ def menu_markup(user):
 
         },
         "ru": {
-            "balance": "Баланс 💵 ",
+            "balance": "Wallet Баланс 💵 ",
             "products": "Продукты 🧶",
             "website": "Сайт 🪐",
             "group": "Группа 👥",
@@ -426,6 +450,8 @@ def view_purchase_markup(purchase, user):
     is_vendor = user.is_vendor
     message_text = f"""
         {translation['view_orders'] if is_vendor else translation['my_orders']}
+        
+        📦 <b>{translation['order_id']}</b> {purchase.id}
         
         <b>{translation['user_name']}</b> {purchase.buyer_username}
         <b>{translation['user_id']}</b> {purchase.buyer_id}
