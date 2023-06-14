@@ -11,36 +11,84 @@ force_reply = types.ForceReply(input_field_placeholder="Enter value")
 expired_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Expired", callback_data="expired")]])
 created_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Created", callback_data="created")]])
 
-def editted_reply(text):
+def edited_reply(text):
     return InlineKeyboardMarkup(
         [
-        [InlineKeyboardButton(text=f"Invoice {text}", callback_data=f"{text}")] 
+        [InlineKeyboardButton(text=f"{text}", callback_data=f"{text}")] 
         ]
     )
+    
 
-def deposit_address_markup(user, invoice):
+def vendor_notification(user, product):
     lang = user.language
-    invoice_id = invoice['id']
-    invoice_link = invoice['checkoutLink']
-    invoice_amount = invoice['amount']
-    invoice_currency = invoice['currency']
-    # qr_code = invoice['receipt']['showQR']
     translations = {
         "en": {
-            "deposit_address_text": f"""
-Invoice Created: {invoice_id}
+            "vendor_notification_text": """
+                The buyer has paid {price}{fiat} for the product {product_name}.
+                
+                From User {user_name}
+                Address:  {address}
+                UserId:   {user_id}
+                Username:  @{user_username}
+                    
+                New Order:  {product_name} 
+                Price:       {price} {fiat}
+                Description: {description}
+            """,
+        },
+        "ru": {
+             "vendor_notification_text": """
+                The buyer has paid {price}{fiat} to for the product {product_name}.
+                
+                From User {user_name}
+                Address:  {address}
+                UserId:   {user_id}
+                Username:  @{user_username}
+                    
+                New Order:  {product_name} 
+                Price:       {price} {fiat}
+                Description: {description}
+            """,
+        }
+    }
+    translation = translations.get(lang, translations["en"])
+    data = {
+        'price': product.price,
+        'fiat': config.FIAT_CURRENCY,
+        'product_name': product.name,
+        'address':user.address,
+        'user_id':user.user_id,
+        'user_name': user.name,
+        'user_username': user.username,
+        'description': product.description,
+    }
+    notification_text = translation['vendor_notification_text'].format(**data)
+    return notification_text
 
-You're depositing {invoice_amount} {invoice_currency}
-Please proceed with the payment by clicking Pay now
+def purchase_address_markup(user, purchase, invoice, state=None):
+    lang = user.language
+    invoice_link = invoice['checkoutLink']
+    translations = {
+        "en": {
+            "purchase_address_text": """
+Invoice for {product_name} Purchase
+InvoiceId: {invoice_id}
+
+You're purchasing {product_name}
+Cost: {invoice_amount} {invoice_currency}
+Please proceed with the payment by clicking Pay Now
 
 Make sure to complete the payment of {invoice_amount} {invoice_currency} within the provided expiration time.
                 """,
-            "address_arrival": """Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
+            "purchase_address_processing": "Payment is currently being processed for {product_name}.",
+            "purchase_address_settled": "Payment has been settled for {product_name}.",
             "back_to_menu": "<<",
-            "pay": "💰Pay now"
+            "pay": "💰Pay now",
+            "processing": "Processing Payment",
+            "settled": "Payment Settled"
         },
         "ru": {
-            "deposit_address_text": f"""
+            "purchase_address_text": """
 Счет-фактура создан: {invoice_id}
 
 Вы вносите {invoice_amount} {invoice_currency}
@@ -48,41 +96,112 @@ Make sure to complete the payment of {invoice_amount} {invoice_currency} within 
 
 Убедитесь, что вы завершили платеж {invoice_amount} {invoice_currency} в течение указанного срока действия.
                 """,
-            "address_arrival": f"""Here is your personal {config.CURRENCY} address for your Investments ⬇️⬇️⬇️""",
+            "purchase_address_processing": "Оплата в настоящее время обрабатывается для {product_name}.",
+            "purchase_address_settled": "Оплата прошла успешно для {product_name}.",
+            "back_to_menu": "<<",
+            "pay": "💰Оплатить сейчас",
+            "processing": "Обработка оплаты",
+            "settled": "Оплата завершена"
+        }
+    }
+
+    translation = translations.get(lang, translations["en"])
+    keyboard = []
+    data = {
+        'product_name': purchase.product_name,
+        'invoice_id': invoice['id'],
+        'invoice_amount': invoice['amount'],
+        'invoice_currency': invoice['currency']
+    }
+    if state is None:
+        purchase_text = translation['purchase_address_text'].format(**data)
+        keyboard.append(InlineKeyboardButton(translation['pay'], url=invoice_link))
+    elif state == "processing":
+        purchase_text = translation['purchase_address_processing'].format(**data)
+        keyboard.append(InlineKeyboardButton(translation['processing'], url=invoice_link))
+    elif state == "settled":
+        purchase_text = translation['purchase_address_settled'].format(**data)
+        keyboard.append(InlineKeyboardButton(translation['settled'], url=''))
+    keyboard.append(InlineKeyboardButton("Cancel", callback_data="cancel"))
+    return purchase_text, InlineKeyboardMarkup([keyboard])
+
+
+def deposit_address_markup(user, invoice):
+    lang = user.language
+    invoice_link = invoice['checkoutLink']
+
+    translations = {
+        "en": {
+            "deposit_address_text": """
+Invoice Created: {invoice_id}
+
+You're depositing {invoice_amount} {invoice_currency}
+Please proceed with the payment by clicking Pay now
+
+Make sure to complete the payment of {invoice_amount} {invoice_currency} within the provided expiration time.
+                """,
+            "back_to_menu": "<<",
+            "pay": "💰Pay now"
+        },
+        "ru": {
+            "deposit_address_text": """
+Счет-фактура создан: {invoice_id}
+
+Вы вносите {invoice_amount} {invoice_currency}
+Пожалуйста, продолжите оплату, нажав «Оплатить сейчас»
+
+Убедитесь, что вы завершили платеж {invoice_amount} {invoice_currency} в течение указанного срока действия.
+                """,
             "back_to_menu": "<<",
             "pay": "💰Оплатить сейчас"
         }
     }
-    translation = translations[lang] if lang in translations else translations["en"]
-    deposite_text = translation['deposit_address_text']
-    keyboard = [[
-        InlineKeyboardButton(translation['pay'], url=invoice_link),
-        InlineKeyboardButton("Cancel", callback_data="cancel"),
-    ]]
-    return deposite_text, InlineKeyboardMarkup(keyboard)
+
+    translation = translations.get(lang, translations["en"])
+
+    data = {
+        'invoice_id': invoice['id'],
+        'invoice_amount': invoice['amount'],
+        'invoice_currency': invoice['currency']
+    }
+
+    deposit_text = translation['deposit_address_text'].format(**data)
+
+    keyboard = [
+        [
+            InlineKeyboardButton(translation['pay'], url=invoice_link),
+            InlineKeyboardButton("Cancel", callback_data="cancel")
+        ]
+    ]
+
+    return deposit_text, InlineKeyboardMarkup(keyboard)
 
 
 def deposit_markup(user):
     lang = user.language
     translations = {
         "en": {
-            "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": f"""<b>Enter the amount you wish to deposit (min: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY})</b>""",
+            "balance_text": "Wallet Balance is {account_balance}",
+            "deposit_text": """<b>Enter the amount you wish to deposit (min: 10 {fiat} max: 5,000,000 {fiat})</b>""",
             "back_to_menu": "<<",
-            "inputholder": "Enter value"
+            "input_holder": "Enter value"
         },
         "ru": {
-            "balance_text": f"Balance is {user.account_balance}",
-            "deposit_text": f"""Введите сумму, которую вы хотите внести (мин.: 0.000025 {config.CURRENCY} max: 5 {config.CURRENCY} )""",
+            "balance_text": "Wallet Balance is {account_balance}",
+            "deposit_text": """Введите сумму, которую вы хотите внести (мин.: 10 {fiat} max: 5,000,000 {fiat} )""",
             "back_to_menu": "<<",
-            "inputholder": "Enter value"
+            "input_holder": "Enter value"
         }
     }
-    translation = translations[lang] if lang in translations else translations["en"]
-    force_reply = types.ForceReply(
-        input_field_placeholder=translation['inputholder'])
-    deposite_text = translation['deposit_text']
-    return deposite_text, force_reply
+    data = {
+        'account_balance': user.account_balance,
+        'fiat': config.FIAT_CURRENCY,
+    }
+    translation = translations.get(lang, translations["en"])
+    force_reply = types.ForceReply(input_field_placeholder=translation['input_holder'])
+    deposit_text = translation['deposit_text'].format(**data)
+    return deposit_text, force_reply
+
 
 
 def purchase_markup(user, purchases):
@@ -124,101 +243,147 @@ def purchase_markup(user, purchases):
     return media, keyboard
 
 
+def payment_method(product, user):
+    lang = user.language
+    translations = {
+        "en": {
+            "cancel": "Cancel",
+            "pay_from_balance": "Pay from Balance",
+            "pay_with_crypto": "Pay with Crypto"
+        },
+        "ru": {
+            "cancel": "Отмена",
+            "pay_from_balance": "Оплатить с баланса",
+            "pay_with_crypto": "Оплатить с помощью криптовалюты"
+        },
+        "ge": {
+            "cancel": "გაუქმება",
+            "pay_from_balance": "გადახდა ბალანსიდან",
+            "pay_with_crypto": "გადახდა კრიპტოვალუტით"
+        }
+    }
+    translation = translations.get(lang, translations["en"])
+    pay_from_wallet = InlineKeyboardButton(translation['pay_from_balance'], callback_data=f"buy_product:pay_from_balance:{product.id}")
+    pay_direct = InlineKeyboardButton(translation['pay_with_crypto'], callback_data=f"buy_product:pay_with_crypto:{product.id}")
+    cancel = InlineKeyboardButton(translation['cancel'], callback_data="cancel")
+    keyboard = [[pay_from_wallet, pay_direct], [cancel]]
+    return InlineKeyboardMarkup(keyboard)
+
 def view_product_markup(product, user):
     lang = user.language
     user_id = user.user_id
+
     translations = {
         "en": {
-            "mine": "My",
-            "view": "View",
-            "product_name": "Product Name:",
-            "price": "Price:",
-            "description": "Description:",
+            "view_product_text": """
+{owner} Product:
+
+<b>Product Name:</b> {name}
+
+💰 <b>Price:</b> {price} {fiat}
+
+    """,
             "delete": "Delete",
             "buy": "Buy",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "mine": "Vendor: My",
+            "view": "View"
         },
         "ru": {
-            "mine": "Моё" if user_id == product.vendor_id else "Просмотр",
-            "view": "Просмотр",
-            "product_name": "Название продукта:",
-            "price": "Цена:",
-            "description": "Описание:",
-            "delete": "Удалить",
-            "buy": "Купить",
-            "cancel": "Отмена"
-        }
+            "view_product_text": """
+{owner} Product:
+
+<b>Product Name:</b> {name}
+
+💰 <b>Price:</b> {price} {fiat}
+
+    """,
+            "delete": "Delete",
+            "buy": "Buy",
+            "cancel": "Cancel",
+            "mine": "Vendor: Моё",
+            "view": "view"
+        },
     }
 
-    translation = translations[lang] if lang in translations else translations["en"]
+    translation = translations.get(lang, translations["en"])
 
-    is_mine = user_id == product.vendor_id
-    message_text = f"""
-        {translation['mine']} Product:
-        
-        <b>{translation['product_name']}</b> {product.name}
-        
-        💰 <b>{translation['price']}</b> {product.price}
-        
-        📝 <b>{translation['description']}</b>
-        {product.description}
-    """
+    data = {
+        'name': product.name,
+        'price': product.price,
+        'fiat': config.FIAT_CURRENCY,
+        'description': product.description,
+        'owner': translation['mine'] if user_id == product.vendor_id else translation['view']
+    }
 
-    button_text = translation['delete'] if is_mine else translation['buy']
-    button_callback = f"delete_product:{product.id}" if is_mine else f"buy_product:{product.id}"
-
-    keyboard = [[
-        InlineKeyboardButton(button_text, callback_data=button_callback),
-        InlineKeyboardButton(translation['cancel'], callback_data="cancel")
-    ]]
-
-    return message_text, InlineKeyboardMarkup(keyboard)
+    view_product_text = translation['view_product_text'].format(**data)
+    
+    key = [
+        InlineKeyboardButton(translation['delete'], callback_data=f"delete_product:{product.id}")
+    ] if user_id == product.vendor_id else [
+        InlineKeyboardButton(translation['buy'], callback_data=f"confirm_payment:{product.id}")
+    ]
+    key.append(InlineKeyboardButton(translation['cancel'], callback_data="cancel"))
+    
+    return view_product_text, InlineKeyboardMarkup([key])
 
 
 def order_placed_markup(product, purchase, user):
     lang = user.language
+    
     translations = {
         "en": {
-            "order_placed": "Your order has been placed successfully! Thank you for shopping with us",
-            "order_id": "Order ID:",
-            "purchase_status": "Purchase Status:",
-            "product_name": "Product Name:",
-            "price": "Price:",
-            "description": "Description:",
+            "order_placed_text": """
+    You have successfully paid {price} {fiat} for the product {name}.
+
+    📦 <b>Order ID:</b> {purchase_id}
+
+    📝 <b>Purchase Status:</b> {status}
+
+    <b>Product Name:</b> {name}
+
+    💰 <b>Price:</b> {price} {fiat}
+
+    📝 <b>Description:</b>
+    {description}
+    """,
             "continue_shopping": "Continue Shopping"
         },
         "ru": {
-            "order_placed": "Ваш заказ успешно размещен! Спасибо за покупку",
-            "order_id": "ID заказа:",
-            "purchase_status": "Статус покупки:",
-            "product_name": "Название продукта:",
-            "price": "Цена:",
-            "description": "Описание:",
+            "order_placed_text": """
+    Вы успешно оплатили {price} {fiat} с вашего баланса за товар {name}.
+
+    📦 <b>Номер заказа:</b> {purchase_id}
+
+    📝 <b>Статус заказа:</b> {status}
+
+    <b>Название товара:</b> {name}
+
+    💰 <b>Цена:</b> {price} {fiat}
+
+    📝 <b>Описание:</b>
+    {description}
+    """,
             "continue_shopping": "Продолжить покупки"
         }
     }
 
-    translation = translations[lang] if lang in translations else translations["en"]
+    translation = translations.get(lang, translations["en"])
 
-    message_text = f"""
-        {translation['order_placed']}
-        
-        📦 <b>{translation['order_id']}</b> {purchase.id}
-        
-        📝 <b>{translation['purchase_status']}</b> {purchase.status}
-
-        <b>{translation['product_name']}</b> {product.name}
-        
-        💰 <b>{translation['price']}</b> {product.price}
-
-        📝 <b>{translation['description']}</b>
-        {product.description}
-    """
+    data = {
+        'name': product.name,
+        'description': product.description,
+        'status': purchase.status,
+        'purchase_id': purchase.id,
+        'fiat': config.FIAT_CURRENCY,
+        'price': product.price,
+    }
+    order_placed_text = translation['order_placed_text'].format(**data)
 
     continue_button = InlineKeyboardButton(
         translation['continue_shopping'], callback_data="continue_shopping")
     keyboard = [[continue_button]]
-    return message_text, InlineKeyboardMarkup(keyboard)
+    return order_placed_text, InlineKeyboardMarkup(keyboard)
 
 
 def all_products_markup(products, user):
@@ -226,11 +391,11 @@ def all_products_markup(products, user):
 
     translations = {
         "en": {
-            "balance": f"🏦 Balance: {user.account_balance} {config.CURRENCY}",
+            "balance": f"🏦 Wallet Balance: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": f"🏦 Баланс: {user.account_balance} {config.CURRENCY}",
+            "balance": f"🏦 Wallet Баланс: {user.account_balance} {config.FIAT_CURRENCY}",
             "back_to_menu": "<<"
         }
     }
@@ -289,7 +454,7 @@ def get_create_product_keyboard(user, fields=None):
         [InlineKeyboardButton(
             f"{translation['description']}: {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"{translation['price']}: {price}", callback_data="create_product:price")],
+            f"{translation['price']}: {price} {config.FIAT_CURRENCY}", callback_data="create_product:price")],
         [InlineKeyboardButton(translation['back_to_menu'],
                               callback_data="back_to_menu")]
     ]
@@ -300,17 +465,17 @@ def get_create_product_keyboard(user, fields=None):
 def product_menu_markup(user):
     translations = {
         "en": {
-            "balance": "🏦 Balance",
+            "balance": "Wallet Balance 💵 ",
             "all_products": "All Products 🧶",
-            "vendor_products": "Vendor Products",
-            "create_product": "Create New Product",
+            "vendor_products": "Vendor Products 📙",
+            "create_product": "Create New Product 🔎",
             "back_to_menu": "<<"
         },
         "ru": {
-            "balance": "🏦 Баланс",
+            "balance": "Wallet Баланс 💵 ",
             "all_products": "Все товары 🧶",
-            "vendor_products": "Товары продавца",
-            "create_product": "Создать новый товар",
+            "vendor_products": "Товары продавца 📙",
+            "create_product": "Создать новый товар 🔎",
             "back_to_menu": "<<"
         }
     }
@@ -320,7 +485,7 @@ def product_menu_markup(user):
 
     is_vendor = user.is_vendor
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.FIAT_CURRENCY}")
 
     if is_vendor:
         keys = [
@@ -348,38 +513,35 @@ def product_menu_markup(user):
 def menu_markup(user):
     translations = {
         "en": {
-            "balance": "🏦 Balance",
-            "deposit": "📥 Deposit",
-            "products": "📦 Products",
-            # "website": "Website 🪐",
-            # "group": "Group 👥",
-            # "admin": "Admin 👩‍🚀",
-            "purchase": "🗂️ Orders"
-            
+            "balance": "Wallet Balance 💵 ",
+            "products": "Products 🧶",
+            "website": "Website 🪐",
+            "group": "Group 👥",
+            "admin": "Admin 👩‍🚀",
+            "purchase": "Purchase 🪺",
+            "deposit": "Deposit"
 
         },
         "ru": {
-            "balance": "🏦 Баланс",
-            "deposit": "📥 Deposit",
-            "products": "📦 Продукты",
-            # "website": "Сайт 🪐",
-            # "group": "Группа 👥",
-            # "admin": "Админ 👩‍🚀",
-            "purchase": "🗂️ Покупка"
+            "balance": "Wallet Баланс 💵 ",
+            "products": "Продукты 🧶",
+            "website": "Сайт 🪐",
+            "group": "Группа 👥",
+            "admin": "Админ 👩‍🚀",
+            "purchase": "Покупка 🪺",
+            "deposit": "Deposit"
         }
     }
-
-    # Default to English if language not available
     lang = user.language if user.language in translations else "en"
     translation = translations[lang]
 
     media = InputMediaPhoto(
-        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.CURRENCY}")
+        config.MENU_PHOTO, caption=f"{translation['balance']}: {user.account_balance} {config.FIAT_CURRENCY}")
     list_menu_keys = [
         [InlineKeyboardButton(translation["products"],
                               callback_data="products")],
-        [InlineKeyboardButton(translation["website"], url=config.WEBSITE_URL)],
-        [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
+        # [InlineKeyboardButton(translation["website"], url=config.WEBSITE_URL)],
+        # [InlineKeyboardButton(translation["group"], url=config.GROUP_URL)],
         [InlineKeyboardButton(translation["admin"], url=config.ADMIN_USER)],
         [InlineKeyboardButton(translation["purchase"],
                               callback_data="purchase")],
@@ -389,78 +551,81 @@ def menu_markup(user):
     keyboard = InlineKeyboardMarkup(list_menu_keys)
     return media, keyboard
 
-
 def view_purchase_markup(purchase, user):
     lang = user.language
-
     translations = {
         "en": {
-            "view_orders": "View Orders",
-            "my_orders": "My Orders",
-            "user_name": "User Name:",
-            "user_id": "User ID:",
-            "vendor_id": "Vendor ID:",
-            "vendor_username": "Vendor Username:",
-            "user_address": "User Address:",
-            "product_name": "Product Name:",
-            "price": "Price:",
-            "description": "Description:",
+            "view_purchase_text": """
+View Orders
+
+📦 <b>Order ID:</b> {purchase_id}
+
+<b>User Name:</b> @{buyer_username}
+<b>User ID:</b> {buyer_id}
+
+<b>Vendor ID:</b> {vendor_id}
+<b>Vendor Username:</b> @{vendor_username}
+
+<b>User Address:</b> {address}
+
+<b>Product Name:</b> {product_name}
+
+💰 <b>Price:</b> {price} {fiat}
+
+📝 <b>Description:</b>
+{description}
+            """,
             "completed": "Completed",
             "cancel": "Cancel"
         },
         "ru": {
-            "view_orders": "Просмотр заказов",
-            "my_orders": "Мои заказы",
-            "user_name": "Имя пользователя:",
-            "user_id": "ID пользователя:",
-            "vendor_id": "ID продавца:",
-            "vendor_username": "Имя пользователя продавца:",
-            "user_address": "Адрес пользователя:",
-            "product_name": "Название продукта:",
-            "price": "Цена:",
-            "description": "Описание:",
+            "view_purchase_text": """
+Просмотр заказов
+
+📦 <b>Номер заказа:</b> {purchase_id}
+
+<b>Имя пользователя:</b> {buyer_username}
+<b>ID пользователя:</b> {buyer_id}
+
+<b>ID продавца:</b> {vendor_id}
+<b>Имя продавца:</b> @{vendor_username}
+
+<b>Адрес пользователя:</b> {address}
+
+<b>Название продукта:</b> {product_name}
+
+💰 <b>Цена:</b> {price} {fiat}
+
+📝 <b>Описание:</b>
+{description}
+            """,
             "completed": "Завершено",
             "cancel": "Отмена"
         }
     }
-
-    translation = translations[lang] if lang in translations else translations["en"]
-
-    is_vendor = user.is_vendor
-    message_text = f"""
-        {translation['view_orders'] if is_vendor else translation['my_orders']}
-        
-        <b>{translation['user_name']}</b> {purchase.buyer_username}
-        <b>{translation['user_id']}</b> {purchase.buyer_id}
-        
-        <b>{translation['vendor_id']}</b> {purchase.vendor_id}
-        <b>{translation['vendor_username']}</b> @{purchase.vendor_username}
-        
-        <b>{translation['user_address']}</b> {purchase.address}
-        
-        <b>{translation['product_name']}</b> {purchase.product_name}
-        
-        💰 <b>{translation['price']}</b> {purchase.price}
-        
-        📝 <b>{translation['description']}</b>
-        {purchase.description}
-    """
-
-    if is_vendor:
-        button_text = translation['completed']
-        button_callback = f"complete_purchase:{purchase.id}"
-        keyboard = [
-            [InlineKeyboardButton(button_text, callback_data=button_callback)],
-            [InlineKeyboardButton(translation['cancel'],
-                                  callback_data="cancel")]
-        ]
-    else:
-        button_text = translation['cancel']
-        button_callback = "cancel"
-        keyboard = [[InlineKeyboardButton(
-            button_text, callback_data=button_callback)]]
-
-    return message_text, InlineKeyboardMarkup(keyboard)
+    translation = translations.get(lang, translations["en"])
+    data = {
+        'purchase_id': purchase.id,
+        'buyer_username': purchase.buyer_username,
+        'fiat': config.FIAT_CURRENCY,
+        'buyer_id': purchase.buyer_id,
+        'vendor_id': purchase.vendor_id,
+        'vendor_username': purchase.vendor_username,
+        'address': purchase.address,
+        'product_name': purchase.product_name,
+        'price': purchase.price,
+        'description': purchase.description,
+    }
+    view_purchase_text = translation['view_purchase_text'].format(**data)
+    # is_vendor = user.is_vendor
+    # if is_vendor:
+    #     button_text = translation['completed']
+    #     button_callback = f"complete_purchase:{purchase.id}"
+    # else:
+    button_text = translation['cancel']
+    button_callback = "cancel"
+    keyboard = [[InlineKeyboardButton(button_text, callback_data=button_callback)]]
+    return view_purchase_text, InlineKeyboardMarkup(keyboard)
 
 
 def get_create_product_keyboard(user, fields=None):
@@ -481,7 +646,6 @@ def get_create_product_keyboard(user, fields=None):
     }
 
     translation = translations[lang] if lang in translations else translations["en"]
-
     name = fields.get(
         'name', translation['name']) if fields else translation['name']
     description = fields.get(
@@ -494,7 +658,7 @@ def get_create_product_keyboard(user, fields=None):
         [InlineKeyboardButton(
             f"{translation['description']} {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
-            f"{translation['price']} {price}", callback_data="create_product:price")],
+            f"{translation['price']} {price} {config.FIAT_CURRENCY}", callback_data="create_product:price")],
         [InlineKeyboardButton(translation['back_to_menu'],
                               callback_data="back_to_menu")]
     ]
@@ -516,8 +680,6 @@ def passive_menu(lang):
     return passive_keys
 
 
-# ------- Language
-
 def lang_keys():
     select_lang_markup = [
         ["English  🇬🇧", "Русский 🇷🇺"]
@@ -528,5 +690,3 @@ def lang_keys():
     )
     lang_keys.keyboard = select_lang_markup
     return lang_keys
-
-# --------
