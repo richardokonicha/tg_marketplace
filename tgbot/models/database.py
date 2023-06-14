@@ -5,6 +5,8 @@ from tgbot import config
 from typing import List
 from decimal import Decimal
 from datetime import datetime
+from mongoengine import ObjectIdField
+from typing import Optional
 
 mongoengine.connect(db=config.DB_NAME,
                     host=config.DATABASE_URL, tlsCAFile=certifi.where())
@@ -106,7 +108,7 @@ class Database:
         return products
 
     @staticmethod
-    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str) -> Purchase:
+    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str, status: str) -> Purchase:
         purchase = Purchase(
             user_id=user_id,
             buyer_username=buyer_username,
@@ -117,7 +119,8 @@ class Database:
             product_name=product_name,
             address=address,
             price=price,
-            description=description
+            description=description,
+            status=status
         )
         purchase.save()
         return purchase
@@ -150,15 +153,17 @@ class Database:
         return purchase
 
     @staticmethod
-    def create_deposit(user: User,  invoice_id: str, user_id: int, message_id: str, amount: Decimal, event_type: str, status: str) -> Deposit:
+    def create_deposit(user: User,  invoice_id: str, invoice_type: str, user_id: int, message_id: str, amount: Decimal, event_type: str, status: str, purchase_id: Optional[ObjectIdField] = None) -> Deposit:
         deposit = Deposit(
             user=user,
             invoice_id=invoice_id,
+            invoice_type=invoice_type,
             user_id=user_id,
             message_id=message_id,
             amount=amount,
             event_type=event_type,
             status=status,
+            purchase_id=purchase_id
         )
         deposit.save()
         return deposit

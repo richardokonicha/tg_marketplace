@@ -7,58 +7,69 @@ from telebot.apihelper import ApiException
 from tgbot.payments import payment_client
 
 
-
-def generate_pay_vendor(message, bot, **kwargs):
-    chat_id = message.chat.id
-    user_id = message.from_user.id
-    bot.send_chat_action(chat_id, action="typing")
-
-    user = db.get_user(user_id)
-    promo = message.text.split(" ")[0]
-
+def purchase_payment_continue(product, purchase, user, bot, message_id, **kwargs):
     try:
-        amount = Decimal(promo)
+        message_text, keyboard = buttons.order_placed_markup(
+            product, purchase, user)
+        vendor_id = product.vendor_id
+        try:
+            bot.edit_message_text(
+                text=message_text,
+                chat_id=user.user_id,
+                message_id=message_id,
+                parse_mode="HTML",
+                reply_markup=keyboard,
+            )
+        except:
+            print("not edited")
+            pass
+        notification_text = buttons.vendor_notification(user, product)
+        bot.send_message(text=notification_text, chat_id=vendor_id)
+        product.delete()
+        return True
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return False
+
+def pay_vendor_with_crypto(user, product, bot, purchase, message_id):
+    vendor_id = product.vendor_id
+    bot.send_chat_action(user.user_id, action="typing")
+    try:
+        amount = Decimal(product.price)
         invoice = payment_client.create_invoice(
             amount=amount,
-            user_id=user_id,
+            user_id=vendor_id,
             currency=config.FIAT_CURRENCY,
-            description=f"Deposit of {amount} {config.FIAT_CURRENCY} from {user.name}",
+            description=f"Purchase of {product.name} {amount} {config.FIAT_CURRENCY} from {user.name}",
         )
-
         if 'code' in invoice and invoice['code'] == 'generic-error':
             raise ValueError
 
-        deposit_text, keyboard = buttons.deposit_address_markup(user, invoice)
+        purchase_text, keyboard = buttons.purchase_address_markup(user, purchase, invoice)
         dmessage = bot.send_message(
-            chat_id,
-            text=deposit_text,
+            user.user_id,
+            text=purchase_text,
             reply_markup=keyboard
         )
-
         db.create_deposit(
             user=user,
             invoice_id=invoice['id'],
-            user_id=user_id,
+            invoice_type="purchase",
+            user_id=user.user_id,
             message_id=dmessage.id,
             amount=invoice['amount'],
             event_type=invoice['type'],
-            status=invoice['status']
+            status=invoice['status'],
+            purchase_id=purchase.id,
         )
     except (ValueError, InvalidOperation):
         bot.send_message(
-            chat_id,
+            user.user_id,
             text="Invalid amount",
-            # reply_markup=buttons.passive_menu(user.language)
         )
-        
-        
-def pay_vendor_with_crypto(user, product, bot, call):
-    vendor_id = product.vendor_id
-    # value = generate_pay_vendor(call.message, bot)
-    
     return True
 
-def pay_vendor_from_balance(user, product, bot, call):
+def pay_vendor_from_balance(user, product, bot, call, purchase):
     vendor_id = product.vendor_id
     vendor = db.get_user(user_id=vendor_id)
     total_amount = product.price
@@ -67,6 +78,9 @@ def pay_vendor_from_balance(user, product, bot, call):
         vendor.account_balance += total_amount
         user.save()
         vendor.save()
+        purchase.status = "completed"
+        purchase.save()
+
         return True
     else:
         try:
@@ -107,14 +121,6 @@ def buy_product(call, bot):
         bot.delete_message(chat_id=chat_id, message_id=call.message.message_id)
         return bot.answer_callback_query(call.id, text="Product Not Available")
     
-    status = False
-    if payment_type == "pay_from_balance":
-        status = pay_vendor_from_balance(user, product, bot, call)
-    elif payment_type == "pay_with_crypto":
-        status = pay_vendor_with_crypto(user, product, bot, call)
-    if status != True:
-        return
-    
     purchase = db.create_purchase(
         user_id=user_id,
         buyer_username=user.username,
@@ -125,37 +131,22 @@ def buy_product(call, bot):
         product_name=product.name,
         address=user.address,
         price=product.price,
-        description=product.description
+        description=product.description,
+        status="incomplete"
     )
-
-    message_text, keyboard = buttons.order_placed_markup(
-        product, purchase, user)
-
-    vender_id = product.vendor_id
-
-    bot.edit_message_text(
-        text=message_text,
-        chat_id=chat_id,
-        message_id=message_id,
-        parse_mode="HTML",
-        reply_markup=keyboard,
-    )
-    
-    vendor_notification = f"""
-    The buyer has paid {product.price}{config.FIAT_CURRENCY} to your account balance for the product {product.name}.
-    
-    From User {user.name}
-    Address:  {user.address}
-    UserId:   {user.user_id}
-    Username:  @{user.username}
+    status = False
+    if payment_type == "pay_from_balance":
+        status = pay_vendor_from_balance(user, product, bot, call, purchase)
+        status_pay = purchase_payment_continue(product, purchase, user, bot, message_id)
+        bot.answer_callback_query(call.id, text="Purchase successful")
         
-    New Order:  {product.name} 
-    Price:       {product.price} {config.FIAT_CURRENCY}
-    Description: {product.description}
+    elif payment_type == "pay_with_crypto":
+        status = pay_vendor_with_crypto(user, product, bot, purchase, message_id)
+        
+    if status != True and purchase.status != "complete":
+        return
     
-    """
-    delete_product = db.delete_product(product_id)
-    bot.send_message(text=vendor_notification, chat_id=vender_id)
+    # payment_success(product, purchase, user, bot, message_id)
 
 
 def view_vendor_products(call, bot):

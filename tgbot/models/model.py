@@ -60,6 +60,8 @@ class Product(Document):
 class Deposit(Document):
     user = ReferenceField('User', required=True)
     invoice_id = StringField(unique=True)
+    purchase_id = ObjectIdField(default=None, null=True)
+    invoice_type = StringField(default="deposit")
     user_id = IntField(default="created")
     message_id = IntField(default="0") 
     amount = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
