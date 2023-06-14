@@ -42,3 +42,8 @@ def exit_view(call, bot):
         bot.delete_message(chat_id=chat_id, message_id=message_id)
     except:
         pass
+
+def show_menu(user, bot):
+    media, keyboard = buttons.menu_markup(user)
+    bot.send_photo(chat_id=user.user_id, photo=media.media,
+                   caption=media.caption, reply_markup=keyboard)
