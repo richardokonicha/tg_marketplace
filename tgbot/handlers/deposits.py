@@ -10,82 +10,6 @@ from tgbot import config
 from tgbot.utils import buttons
 from telebot.apihelper import ApiException
 from tgbot.handlers.menu import show_menu
-from .product import purchase_payment_continue
-
-
-def handle_purchase_payment(deposit, bot):
-    purchase = db.get_purchase_by_id(purchase_id=deposit.purchase_id)
-    product = db.get_product_by_id(product_id=purchase.product_id)
-    user = db.get_user(user_id=deposit.user_id)
-    message_id = deposit.message_id
-    user = db.get_user(user_id=deposit.user_id)
-    if deposit.status == "settled":
-        purchase.status = "completed"
-        purchase.save()
-        purchase_payment_continue(product, purchase, user, bot, message_id)
-    return
-
-def handle_invoice_created_webhook(data, bot):
-    deposit = db.update_deposit_by_invoice_id(invoice_id=data['invoiceId'], event_type=data['type'], status="created", updated_at=data['timestamp'])
-    try:
-        print('created webhook')
-
-    except KeyError:
-        print('No user id linked to this webhook, ignoring')
-    except Exception as e:
-        print(f"An error occurred: {e}")
-
-
-def handle_invoice_paid_webhook(data, bot):
-    deposit = db.update_deposit_by_invoice_id(
-        invoice_id=data['invoiceId'], 
-        event_type=data['type'], 
-        status="settled", 
-        updated_at=data['timestamp'],
-        )
-    if deposit.event_type == 'InvoicePaymentSettled':
-        payment = Decimal(data['payment']['value'])
-        user = db.update_balance(user_id=deposit.user_id, payment=deposit.amount)
-        show_menu(user, bot)
-        
-    if deposit.invoice_type == "purchase":
-        handle_purchase_payment(deposit=deposit, bot=bot)
-        
-    try:
-        bot.edit_message_reply_markup(chat_id=deposit.user_id, message_id=deposit.message_id, reply_markup=buttons.editted_reply("Settled"))
-    except:
-        print('No user id linked to this webhook, ignoring')
-        return
-    
-def handle_payment_recieved_webhook(data, bot):
-    deposit = db.update_deposit_by_invoice_id(
-        invoice_id=data['invoiceId'], 
-        event_type=data['type'], 
-        status="recieved", 
-        amount_recieved=data['payment']['value'],  
-        updated_at=data['timestamp'],
-        )
-    if deposit.invoice_type == "purchase":
-        purchase = db.get_purchase_by_id(purchase_id=deposit.purchase_id)
-        product = db.get_product_by_id(product_id=purchase.id)
-        user = db.get_user(user_id=deposit.user_id)
-        message_id = deposit.message_id
-        purchase_payment_continue(product, purchase, user, bot, message_id)
-        pass
-    try:
-        bot.edit_message_reply_markup(chat_id=deposit.user_id, message_id=deposit.message_id, reply_markup=buttons.editted_reply("Confirming"))
-    except:
-        print('No user id linked to this webhook, ignoring')
-        return
-
-def handle_invoice_expired_webhook(data, bot):
-    deposit = db.update_deposit_by_invoice_id(invoice_id=data['invoiceId'], event_type=data['type'], updated_at=data['timestamp'])
-    try:
-        bot.edit_message_reply_markup(chat_id=deposit.user_id, message_id=deposit.message_id, reply_markup=buttons.editted_reply("Expired"))
-    except KeyError:
-        print('No user id linked to this webhook, ignoring')
-    except Exception as e:
-        print(f"An error occurred: {e}")
 
 
 def generate_address(message, bot, **kwargs):
@@ -138,7 +62,7 @@ def deposit(message: Message, bot: TeleBot):
     user_id = message.from_user.id
     chat_id = message.chat.id
     user = db.get_user(user_id)
-    if user == None:
+    if user is None:
         return start(message, bot)
     balance = user.account_balance
     lang = user.language
@@ -163,8 +87,9 @@ def promo(message: Message, bot: TeleBot):
     amount = Decimal(promo)
     invoice = payment_client.create_invoice(
         amount=amount,
-        description="Deposit of {amount} USD from {user.name}"
+        description=f"Deposit of {amount} USD from {user.name}"
     )
+
     try:
         promo = Decimal(promo)
         new_balance = user.account_balance + promo

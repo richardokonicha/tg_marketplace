@@ -11,10 +11,10 @@ force_reply = types.ForceReply(input_field_placeholder="Enter value")
 expired_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Expired", callback_data="expired")]])
 created_reply = InlineKeyboardMarkup([[InlineKeyboardButton(text="Invoice Created", callback_data="created")]])
 
-def editted_reply(text):
+def edited_reply(text):
     return InlineKeyboardMarkup(
         [
-        [InlineKeyboardButton(text=f"Invoice {text}", callback_data=f"{text}")] 
+        [InlineKeyboardButton(text=f"{text}", callback_data=f"{text}")] 
         ]
     )
     
@@ -24,7 +24,7 @@ def vendor_notification(user, product):
     translations = {
         "en": {
             "vendor_notification_text": """
-                The buyer has paid {price}{fiat} to your account balance for the product {product_name}.
+                The buyer has paid {price}{fiat} for the product {product_name}.
                 
                 From User {user_name}
                 Address:  {address}
@@ -38,7 +38,7 @@ def vendor_notification(user, product):
         },
         "ru": {
              "vendor_notification_text": """
-                The buyer has paid {price}{fiat} to your account balance for the product {product_name}.
+                The buyer has paid {price}{fiat} to for the product {product_name}.
                 
                 From User {user_name}
                 Address:  {address}
@@ -334,7 +334,7 @@ def order_placed_markup(product, purchase, user):
     translations = {
         "en": {
             "order_placed_text": """
-    You have successfully paid {price} {fiat} from your account balance for the product {name}.
+    You have successfully paid {price} {fiat} for the product {name}.
 
     📦 <b>Order ID:</b> {purchase_id}
 
