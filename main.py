@@ -24,11 +24,38 @@ def checkWebhook():
     return "Your bot application is still active!", 200
 # server.add_url_rule()
 
-@server.route('/dashboard/')
-@server.route('/dashboard/<name>')
+@server.route('/users')
+@server.route('/dashboard')
 def dashboard(name=None):
+    action = request.args.get('action')
+    user_id = request.args.get('user_id')
+
+    if action == 'switch_role' and user_id:
+        db.update_user(user_id=user_id, is_vendor=not db.get_user(user_id).is_vendor)
+        print(f"Action performed for User ID: {user_id}")
+
     users = db.get_all_users()
-    return render_template('dashboard.html', name=name, users=users)
+    return render_template('users.html', users=users)
+
+@server.route('/products')
+def allProducts():
+    action = request.args.get('action')
+    product_id = request.args.get('product_id')
+
+    # import pdb; pdb.set_trace()
+
+    if action == 'delete_item' and product_id:
+        db.delete_product(product_id=product_id)
+        print(f"Product deleted with ID: {product_id}")
+
+    products = db.get_all_products()
+    return render_template('products.html', data=products)
+
+
+@server.route('/orders')
+def purchases():
+    orders = db.get_all_purchases()
+    return render_template('orders.html', data=orders)
 
 
 @server.route("/")

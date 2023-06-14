@@ -12,7 +12,7 @@ class BtcPay:
                        amount: Decimal, 
                        description: str, 
                        user_id: str, 
-                       currency: str = config.CURRENCY, 
+                       currency: str = 'USD', 
                        **kwargs) -> dict | None:
         "Creates a new btcpay invoice"
         try:
