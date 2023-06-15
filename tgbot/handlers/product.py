@@ -115,6 +115,15 @@ def save_product_value(message, **kwargs):
     chat_id = message.chat.id
     message_text = message.text
     
+    if "attempt_counter" not in kwargs:
+        kwargs["attempt_counter"] = 0
+    
+    kwargs["attempt_counter"] += 1
+    
+    if kwargs["attempt_counter"] >= 7:
+        bot.send_message(chat_id=chat_id, text="You have exceeded the maximum number of failed attempts.")
+        return 
+    
     if value == "price":
         try:
             quant = Decimal(message_text)
@@ -126,12 +135,13 @@ def save_product_value(message, **kwargs):
             
     elif value == "category":
         category_set = db.get_all_categories_set()
-        message_text = message_text.lower()
         
-        if message_text.lower() not in category_set:
+        if not category_set: 
+            message_text = "general" 
+        elif message_text.lower() not in category_set:
             value = "error"
             bot.send_message(
-                chat_id=chat_id, text=f"Invalid Category. {message_text} \nEnter category from given list only.")
+                chat_id=chat_id, text=f"Invalid Category. {message_text} \nEnter category from the given list only.")
         
     fields[value] = message_text
     keyboard = buttons.get_create_product_keyboard(user, fields)
@@ -164,29 +174,34 @@ def save_product_value(message, **kwargs):
             markup=markup,
             fields=fields,
             call=call,
-            user=user
+            user=user,
+            attempt_counter=kwargs["attempt_counter"]
         )
         
     elif "category" not in fields:
-        category_set = db.get_all_categories_set()
-        category_list = ''.join([f'\n{i}' for i in category_set])
-        category_text = f"""
-        Choose Category:
-        {category_list}
-        """
-        enter_category = bot.send_message(
-            chat_id=chat_id, text=category_text, reply_markup=buttons.force_reply)
-        bot.register_next_step_handler(
-            enter_category,
-            save_product_value,
-            value="category",
-            create_product_id=create_product_id,
-            bot=bot,
-            markup=markup,
-            fields=fields,
-            call=call,
-            user=user
-        )
+        if kwargs["attempt_counter"] >= 4:
+            fields["category"] = "general"
+        else:
+            category_set = db.get_all_categories_set()
+            category_list = ''.join([f'\n{i.capitalize()}' for i in category_set])
+            category_text = f"""
+            Choose Category:
+            {category_list}
+            """
+            enter_category = bot.send_message(
+                chat_id=chat_id, text=category_text, reply_markup=buttons.force_reply)
+            bot.register_next_step_handler(
+                enter_category,
+                save_product_value,
+                value="category",
+                create_product_id=create_product_id,
+                bot=bot,
+                markup=markup,
+                fields=fields,
+                call=call,
+                user=user,
+                attempt_counter=kwargs["attempt_counter"]
+            )
     
     elif "description" not in fields:
         enter_description = bot.send_message(
@@ -200,7 +215,8 @@ def save_product_value(message, **kwargs):
             markup=markup,
             fields=fields,
             call=call,
-            user=user
+            user=user,
+            attempt_counter=kwargs["attempt_counter"]
         )
     
     elif "price" not in fields:
@@ -215,7 +231,8 @@ def save_product_value(message, **kwargs):
             markup=markup,
             fields=fields,
             call=call,
-            user=user
+            user=user,
+            attempt_counter=kwargs["attempt_counter"]
         )
     
     else:

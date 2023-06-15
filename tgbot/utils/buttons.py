@@ -442,7 +442,7 @@ def all_categories_markup(categories, user):
     for category in categories:
         all_categories_markup.append([
             InlineKeyboardButton(
-                category.category_name, callback_data=f"view_category:{category.category_name}")
+                category.category_name.capitalize(), callback_data=f"view_category:{category.category_name}")
         ])
     all_categories_markup.append([
         InlineKeyboardButton(
