@@ -55,6 +55,12 @@ class Product(Document):
     meta = {
         'collection': 'products'
     }
+    
+class Category(Document):
+    category_name = StringField(required=True, unique=True)
+    meta = {
+        'collection': 'category'
+    }
 
 
 class Deposit(Document):
