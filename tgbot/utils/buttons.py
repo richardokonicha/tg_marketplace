@@ -280,6 +280,8 @@ def view_product_markup(product, user):
 
 <b>Product Name:</b> {name}
 
+<b>Category:</b> {category}
+
 💰 <b>Price:</b> {price} {fiat}
 
     """,
@@ -294,6 +296,8 @@ def view_product_markup(product, user):
 {owner} Product:
 
 <b>Product Name:</b> {name}
+
+<b>Category:</b> {category}
 
 💰 <b>Price:</b> {price} {fiat}
 
@@ -313,6 +317,7 @@ def view_product_markup(product, user):
         'price': product.price,
         'fiat': config.FIAT_CURRENCY,
         'description': product.description,
+        'category': product.category,
         'owner': translation['mine'] if user_id == product.vendor_id else translation['view']
     }
 
@@ -416,24 +421,59 @@ def all_products_markup(products, user):
     return media, InlineKeyboardMarkup(all_products_markup)
 
 
+def all_categories_markup(categories, user):
+    lang = user.language
+
+    translations = {
+        "en": {
+            "balance": f"🏦 Wallet Balance: {user.account_balance} {config.FIAT_CURRENCY}",
+            "back_to_menu": "<<"
+        },
+        "ru": {
+            "balance": f"🏦 Wallet Баланс: {user.account_balance} {config.FIAT_CURRENCY}",
+            "back_to_menu": "<<"
+        }
+    }
+
+    translation = translations[lang] if lang in translations else translations["en"]
+
+    all_categories_markup = []
+    media = InputMediaPhoto(config.MENU_PHOTO, caption=translation['balance'])
+    for category in categories:
+        all_categories_markup.append([
+            InlineKeyboardButton(
+                category.category_name.capitalize(), callback_data=f"view_category:{category.category_name}")
+        ])
+    all_categories_markup.append([
+        InlineKeyboardButton(
+            translation['back_to_menu'], callback_data="back_to_menu")
+    ])
+    return media, InlineKeyboardMarkup(all_categories_markup)
+    
+
+
 def get_create_product_keyboard(user, fields=None):
     lang = user.language
     translations = {
         "en": {
             "name": "Name",
+            "category": "Category",
             "description": "Description",
             "price": "Price",
             "back_to_menu": "<<",
             "enter_name": "Enter name",
+            "enter_category": "Enter Category",
             "enter_description": "Enter description",
             "enter_price": "Enter price"
         },
         "ru": {
             "name": "Название",
+            "category": "Category",
             "description": "Описание",
             "price": "Цена",
             "back_to_menu": "<<",
             "enter_name": "Введите название",
+            "enter_category": "Enter Category",
             "enter_description": "Введите описание",
             "enter_price": "Введите цену"
         }
@@ -443,6 +483,8 @@ def get_create_product_keyboard(user, fields=None):
 
     name = fields.get(
         'name', translation['enter_name']) if fields else translation['enter_name']
+    category = fields.get(
+        'category', translation['enter_category']) if fields else translation['enter_category']
     description = fields.get(
         'description', translation['enter_description']) if fields else translation['enter_description']
     price = fields.get(
@@ -451,6 +493,8 @@ def get_create_product_keyboard(user, fields=None):
     create_product_keyboard = [
         [InlineKeyboardButton(
             f"{translation['name']}: {name}", callback_data="create_product:name")],
+        [InlineKeyboardButton(
+            f"{translation['category']}: {category}", callback_data="create_product:category")],
         [InlineKeyboardButton(
             f"{translation['description']}: {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
@@ -467,6 +511,7 @@ def product_menu_markup(user):
         "en": {
             "balance": "Wallet Balance 💵 ",
             "all_products": "All Products 🧶",
+            "all_categories": "All Categories",
             "vendor_products": "Vendor Products 📙",
             "create_product": "Create New Product 🔎",
             "back_to_menu": "<<"
@@ -474,6 +519,7 @@ def product_menu_markup(user):
         "ru": {
             "balance": "Wallet Баланс 💵 ",
             "all_products": "Все товары 🧶",
+            "all_categories": "All Categories",
             "vendor_products": "Товары продавца 📙",
             "create_product": "Создать новый товар 🔎",
             "back_to_menu": "<<"
@@ -492,6 +538,8 @@ def product_menu_markup(user):
             [InlineKeyboardButton(
                 translation["all_products"], callback_data="all_products")],
             [InlineKeyboardButton(
+                translation["all_categories"], callback_data="all_categories")],
+            [InlineKeyboardButton(
                 translation["vendor_products"], callback_data="vendor_products")],
             [InlineKeyboardButton(
                 translation["create_product"], callback_data="create_product")],
@@ -502,6 +550,8 @@ def product_menu_markup(user):
         keys = [
             [InlineKeyboardButton(
                 translation["all_products"], callback_data="all_products")],
+            [InlineKeyboardButton(
+                translation["all_categories"], callback_data="all_categories")],
             [InlineKeyboardButton(
                 translation["back_to_menu"], callback_data="back_to_menu")]
         ]
@@ -633,12 +683,14 @@ def get_create_product_keyboard(user, fields=None):
     translations = {
         "en": {
             "name": "Name:",
+            "category": "Categories:",
             "description": "Description:",
             "price": "Price:",
             "back_to_menu": "<<"
         },
         "ru": {
             "name": "Название:",
+            "category": "Categories:",
             "description": "Описание:",
             "price": "Цена:",
             "back_to_menu": "<<"
@@ -648,6 +700,8 @@ def get_create_product_keyboard(user, fields=None):
     translation = translations[lang] if lang in translations else translations["en"]
     name = fields.get(
         'name', translation['name']) if fields else translation['name']
+    category = fields.get(
+        'category', translation['category']) if fields else translation['category']
     description = fields.get(
         'description', translation['description']) if fields else translation['description']
     price = fields.get(
@@ -655,6 +709,8 @@ def get_create_product_keyboard(user, fields=None):
     create_product_keyboard = [
         [InlineKeyboardButton(
             f"{translation['name']} {name}", callback_data="create_product:name")],
+        [InlineKeyboardButton(
+            f"{translation['category']} {category}", callback_data="create_product:category")],
         [InlineKeyboardButton(
             f"{translation['description']} {description}", callback_data="create_product:description")],
         [InlineKeyboardButton(
