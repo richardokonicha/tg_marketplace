@@ -72,6 +72,35 @@ def view_all_products(call, bot):
         reply_markup=keyboard,
     )
 
+def view_category(call, bot):
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+    message_id = call.message.message_id
+    user = db.get_user(user_id)
+    category_name = call.data.split(":")[1]
+    products = db.get_all_product_category(category_name)
+    media, keyboard = buttons.all_products_markup(products, user)
+    bot.edit_message_media(
+        chat_id=chat_id,
+        message_id=message_id,
+        media=media,
+        reply_markup=keyboard,
+    )
+    
+def view_all_categories(call, bot):
+    chat_id = call.message.chat.id
+    user_id = call.from_user.id
+    message_id = call.message.message_id
+    user = db.get_user(user_id)
+    categories = db.get_all_categories()
+    media, keyboard = buttons.all_categories_markup(categories, user)
+    bot.edit_message_media(
+        chat_id=chat_id,
+        message_id=message_id,
+        media=media,
+        reply_markup=keyboard,
+    )
+    
 
 def save_product_value(message, **kwargs):
     bot = kwargs.get("bot")
@@ -85,7 +114,7 @@ def save_product_value(message, **kwargs):
     username = message.from_user.username
     chat_id = message.chat.id
     message_text = message.text
-  
+    
     if value == "price":
         try:
             quant = Decimal(message_text)
@@ -94,7 +123,16 @@ def save_product_value(message, **kwargs):
             value = "error"
             bot.send_message(
                 chat_id=chat_id, text="Invalid Price. Enter digits only.")
-    
+            
+    elif value == "category":
+        category_set = db.get_all_categories_set()
+        message_text = message_text.lower()
+        
+        if message_text.lower() not in category_set:
+            value = "error"
+            bot.send_message(
+                chat_id=chat_id, text=f"Invalid Category. {message_text} \nEnter category from given list only.")
+        
     fields[value] = message_text
     keyboard = buttons.get_create_product_keyboard(user, fields)
     
@@ -128,6 +166,28 @@ def save_product_value(message, **kwargs):
             call=call,
             user=user
         )
+        
+    elif "category" not in fields:
+        category_set = db.get_all_categories_set()
+        category_list = ''.join([f'\n{i}' for i in category_set])
+        category_text = f"""
+        Choose Category:
+        {category_list}
+        """
+        enter_category = bot.send_message(
+            chat_id=chat_id, text=category_text, reply_markup=buttons.force_reply)
+        bot.register_next_step_handler(
+            enter_category,
+            save_product_value,
+            value="category",
+            create_product_id=create_product_id,
+            bot=bot,
+            markup=markup,
+            fields=fields,
+            call=call,
+            user=user
+        )
+    
     elif "description" not in fields:
         enter_description = bot.send_message(
             chat_id=chat_id, text="Enter Description:", reply_markup=buttons.force_reply)
@@ -142,6 +202,7 @@ def save_product_value(message, **kwargs):
             call=call,
             user=user
         )
+    
     elif "price" not in fields:
         enter_price = bot.send_message(
             chat_id=chat_id, text="Enter Price:", reply_markup=buttons.force_reply)
@@ -156,14 +217,16 @@ def save_product_value(message, **kwargs):
             call=call,
             user=user
         )
+    
     else:
         name = fields["name"]
+        category = fields["category"]
         description = fields["description"]
         price = fields["price"]
         vendor_id = user_id
         vendor_username = username
 
-        db.create_product(name, description, price, vendor_id, vendor_username)
+        db.create_product(name, description, price, vendor_id, vendor_username, category=category.lower())
         keyboard = buttons.get_create_product_keyboard(user, fields)
         bot.edit_message_media(
             chat_id=chat_id,

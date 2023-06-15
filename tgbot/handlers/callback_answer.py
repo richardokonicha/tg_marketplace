@@ -6,7 +6,7 @@ from tgbot.models import db
 from tgbot import config
 from tgbot.config import logger
 from tgbot.handlers.deposits import deposit
-from tgbot.handlers.product import save_product_value, delete_product, view_product, view_all_products, view_vendor_products
+from tgbot.handlers.product import save_product_value, delete_product, view_product, view_all_products, view_all_categories, view_vendor_products, view_category
 from telebot.types import InputMediaPhoto
 from tgbot.handlers.menu import back_to_menu, exit_view
 from tgbot.handlers.purchase import view_purchase, confirm_payment_method, buy_product
@@ -41,14 +41,24 @@ def callback_answer(call, **kwargs):
     elif call.data == "back_to_menu":
         logger.info(f"Back to Menu")
         back_to_menu(call, bot)
+        
+    elif call.data == "all_categories":
+        logger.info(f"User {user_id} requested to view all categories")
+        view_all_categories(call, bot)
+    
+    elif call.data.startswith("view_category:"):
+        logger.info(f"Category {call.data} requested to view a category")
+        view_category(call, bot)
 
     elif call.data == "all_products":
         logger.info(f"User {user_id} requested to view all products")
         view_all_products(call, bot)
+        
 
     elif call.data == "vendor_products":
         logger.info(f"User {user_id} requested to view vendor products")
         view_vendor_products(call, bot)
+        
 
     elif call.data.startswith("view_product:"):
         logger.info(f"User {user_id} requested to view a product")

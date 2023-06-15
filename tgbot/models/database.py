@@ -1,6 +1,6 @@
 import mongoengine
 import certifi
-from tgbot.models.model import User, Product, Purchase, Deposit
+from tgbot.models.model import User, Product, Purchase, Deposit, Category
 from tgbot import config
 from typing import List
 from decimal import Decimal
@@ -76,6 +76,7 @@ class Database:
         return products
 
     @staticmethod
+    
     def create_product(name: str, description: str, price: Decimal, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
         product = Product(name=name, description=description,
                           price=price, category=category, vendor_id=vendor_id, vendor_username=vendor_username)
@@ -106,6 +107,44 @@ class Database:
     def get_all_products() -> List[Product]:
         products = Product.objects()
         return products
+    
+    @staticmethod
+    def get_all_product_category(category_name: str) -> List[Product]:
+        products = Product.objects(category=category_name.lower())
+        return products
+    
+    
+    @staticmethod
+    def get_all_categories_set() -> set:
+        categories = Category.objects()
+        category_set = set(category.category_name for category in categories)
+        return category_set
+
+    
+    @staticmethod
+    def get_all_categories() -> List[Category]:
+        categories = Category.objects()
+        return categories
+    
+    @staticmethod
+    def get_category(category_name) -> Category:
+        category = Category.objects(category_name=category_name.lower()).first()
+        if category:
+            return category
+        return False
+    
+    
+    @staticmethod
+    def create_category(category_name: str) -> Category:
+        try:
+            category = Category(
+                category_name=category_name.lower(),
+            )
+            category.save()
+            return category
+        except Exception as e:
+            print("Category already exists.", e)
+            return False
 
     @staticmethod
     def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str, status: str) -> Purchase:
