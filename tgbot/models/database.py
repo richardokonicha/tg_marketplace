@@ -1,6 +1,6 @@
 import mongoengine
 import certifi
-from tgbot.models.model import User, Product, Purchase, Deposit, Category
+from tgbot.models.model import User, Product, Purchase, Deposit, Category, Categoryy
 from tgbot import config
 from typing import List
 from decimal import Decimal
@@ -137,15 +137,13 @@ class Database:
     @staticmethod
     def create_category(category_name: str) -> Category:
         try:
-            category = Category(
-                category_name=category_name.lower(),
-            )
+            category = Category(category_name=category_name.lower())
             category.save()
             return category
         except Exception as e:
-            print("Category already exists.", e)
+            print("An error occurred:", e)
             return False
-
+        
     @staticmethod
     def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str, status: str) -> Purchase:
         purchase = Purchase(
