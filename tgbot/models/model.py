@@ -56,10 +56,26 @@ class Product(Document):
         'collection': 'products'
     }
     
+
 class Category(Document):
     category_name = StringField(required=True, unique=True)
     meta = {
-        'collection': 'category'
+        'collection': 'categoryi'
+    }
+
+    def save(self, *args, **kwargs):
+        # Check if category name already exists
+        existing_category = Category.objects(category_name=self.category_name).first()
+        if existing_category:
+            raise ValueError(f"Category '{self.category_name}' already exists.")
+        
+        super(Category, self).save(*args, **kwargs)
+
+    
+class Categoryy(Document):
+    category_name = StringField(required=True, unique=True)
+    meta = {
+        'collection': 'categoryy'
     }
 
 
