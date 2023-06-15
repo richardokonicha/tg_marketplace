@@ -1,7 +1,7 @@
 import re
 from .admin import admin_user
 from .spam_command import anti_spam
-from .user import make_regular_user, make_vendor
+from .user import make_regular_user, make_vendor, make_category, removecategory
 from .start import start
 from .language import show_language, set_language
 from .deposits import promo
@@ -21,6 +21,10 @@ def register_handlers(bot, server):
         make_regular_user, commands=['makeuser'], pass_bot=True)
     bot.register_message_handler(
         make_vendor, commands=['makevendor'], pass_bot=True)
+    bot.register_message_handler(
+        make_category, commands=['newcategory'], pass_bot=True)
+    bot.register_message_handler(
+        removecategory, commands=['removecategory'], pass_bot=True)
     bot.register_message_handler(
         anti_spam, commands=['spam'], pass_bot=True)
     bot.register_message_handler(
