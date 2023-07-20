@@ -2,6 +2,15 @@ import datetime
 from tgbot import config
 import base64
 
+import re
+
+def extract_links(text):
+    pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    # Alternatively, you can use the following pattern if you want to match www.example.com links as well:
+    # pattern = r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F])|\w+\.[\w.]+)+'
+    
+    matches = re.findall(pattern, text)
+    return matches
 
 def send_notification(message):
     print("Notification:", message)

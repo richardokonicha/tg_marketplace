@@ -77,7 +77,7 @@ class Database:
 
     @staticmethod
     
-    def create_product(name: str, description: str, price: Decimal, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
+    def create_product(name: str, description: List, price: Decimal, vendor_id: int, vendor_username: str, category: str = None,) -> Product:
         product = Product(name=name, description=description,
                           price=price, category=category, vendor_id=vendor_id, vendor_username=vendor_username)
         product.save()
@@ -145,7 +145,7 @@ class Database:
             return False
         
     @staticmethod
-    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal, description: str, status: str) -> Purchase:
+    def create_purchase(user_id: int, buyer_username: str, buyer_id: int, vendor_id: int, vendor_username: str, product_id: str, product_name: str, address: str, price: Decimal,  status: str, description: Optional[str] = '',) -> Purchase:
         purchase = Purchase(
             user_id=user_id,
             buyer_username=buyer_username,

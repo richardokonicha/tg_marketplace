@@ -24,11 +24,9 @@ def handle_purchase_payment(deposit, bot):
     
     try:
         if deposit.status == "settled" and product is not None:
-            purchase.status = "completed"
-            purchase.save()
-            
-            res = purchase_payment_continue(product, purchase, user, bot, message_id)
+           
             ress = pay_vendor_from_crypto(product, purchase)
+            res = purchase_payment_continue(product, purchase, user, bot, message_id)
             
             bot.edit_message_reply_markup(
                 chat_id=deposit.user_id,
@@ -36,9 +34,6 @@ def handle_purchase_payment(deposit, bot):
                 reply_markup=buttons.edited_reply("Settled")
             )
             
-            product.delete()
-            
-            logger.info("Purchase payment handled successfully")
             return True
     except Exception as e:
         logger.error("An error occurred in handle_purchase_payment", exc_info=True)
