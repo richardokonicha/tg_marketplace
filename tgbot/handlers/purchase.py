@@ -74,7 +74,7 @@ def purchase_payment_continue(product, purchase, user, bot, message_id, status=N
         quantity = len(product.description)
         if quantity == 0:
             product.delete()
-            bot.send_message(text="Product {product.name} is exhausted", chat_id=vendor_id)
+            bot.send_message(text=f"Product {product.name} is exhausted", chat_id=vendor_id)
 
         logger.info("Purchase payment handled successfully")
         return True
@@ -212,7 +212,10 @@ def buy_product(call, bot):
         status = pay_vendor_from_balance(user, product, bot, call, purchase)
         if status:
             status_pay = purchase_payment_continue(product, purchase, user, bot, message_id)
-            bot.answer_callback_query(call.id, text="Purchase successful")
+            try:
+                bot.answer_callback_query(call.id, text="Purchase successful")
+            except:
+                pass
         else:
             logger.info("Purchase Failed")
             
