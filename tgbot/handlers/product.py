@@ -5,6 +5,7 @@ from telebot.types import InputMediaPhoto
 from decimal import Decimal, InvalidOperation
 from telebot.apihelper import ApiException
 from tgbot.payments import payment_client
+from tgbot.utils.helpers import extract_links
 
 
 def delete_product(call, bot):
@@ -124,6 +125,22 @@ def save_product_value(message, **kwargs):
         bot.send_message(chat_id=chat_id, text="You have exceeded the maximum number of failed attempts.")
         return 
     
+    if value == "name":
+        if len(message_text) > 100:
+            value = "error"
+            bot.send_message(
+                chat_id=chat_id, text="Invalid Name. Enter name less than 100 characters.")
+            
+    if value == "description":
+        try:
+            links = extract_links(message_text)
+            message_text = links
+        except Exception as e:
+            value = "error"
+            bot.send_message(
+                chat_id=chat_id, text="Invalid Product Content. Enter links only.")
+            
+    
     if value == "price":
         try:
             quant = Decimal(message_text)
@@ -204,8 +221,24 @@ def save_product_value(message, **kwargs):
             )
     
     elif "description" not in fields:
+        
+        text_message = f"""
+        Enter Product Stock item links:
+This can be one or more links separated by a new line.
+Example:
+```
+
+https://1b34-197-210-79-124.ngrok-free.app
+
+https://1b34-197-210-79-124.ngrok-free.app
+
+```
+Here Product stock = 2x
+The number of links inputed would be the number of stock items for the product.
+        
+        """
         enter_description = bot.send_message(
-            chat_id=chat_id, text="Enter Description:", reply_markup=buttons.force_reply)
+            chat_id=chat_id, text=text_message, reply_markup=buttons.force_reply, parse_mode="Markdown")
         bot.register_next_step_handler(
             enter_description,
             save_product_value,
