@@ -19,35 +19,35 @@ def edited_reply(text):
     )
     
 
-def vendor_notification(user, product):
+def vendor_notification(user, product, stock_item):
     lang = user.language
     translations = {
         "en": {
             "vendor_notification_text": """
-                The buyer has paid {price}{fiat} for the product {product_name}.
-                
-                From User {user_name}
-                Address:  {address}
-                UserId:   {user_id}
-                Username:  @{user_username}
-                    
-                New Order:  {product_name} 
-                Price:       {price} {fiat}
-                Description: {description}
+The buyer has paid {price}{fiat} for the product {product_name}.
+
+From User {user_name}
+Address:  {address}
+UserId:   {user_id}
+Username:  @{user_username}
+    
+New Order:  {product_name} 
+Price:       {price} {fiat}
+Stock Item: {stock_item}
             """,
         },
         "ru": {
              "vendor_notification_text": """
-                The buyer has paid {price}{fiat} to for the product {product_name}.
-                
-                From User {user_name}
-                Address:  {address}
-                UserId:   {user_id}
-                Username:  @{user_username}
-                    
-                New Order:  {product_name} 
-                Price:       {price} {fiat}
-                Description: {description}
+The buyer has paid {price}{fiat} to for the product {product_name}.
+
+From User {user_name}
+Address:  {address}
+UserId:   {user_id}
+Username:  @{user_username}
+    
+New Order:  {product_name} 
+Price:       {price} {fiat}
+Stock Item: {stock_item}
             """,
         }
     }
@@ -61,6 +61,7 @@ def vendor_notification(user, product):
         'user_name': user.name,
         'user_username': user.username,
         'description': product.description,
+        'stock_item': stock_item
     }
     notification_text = translation['vendor_notification_text'].format(**data)
     return notification_text
@@ -282,6 +283,9 @@ def view_product_markup(product, user):
 
 <b>Category:</b> {category}
 
+<b>Stock:</b> {description}x
+{stock_list}
+
 💰 <b>Price:</b> {price} {fiat}
 
     """,
@@ -299,6 +303,9 @@ def view_product_markup(product, user):
 
 <b>Category:</b> {category}
 
+<b>Stock:</b> {description}x
+{stock_list}
+
 💰 <b>Price:</b> {price} {fiat}
 
     """,
@@ -311,12 +318,15 @@ def view_product_markup(product, user):
     }
 
     translation = translations.get(lang, translations["en"])
+    
+    stock_list = ''.join([f"{i} \n" for i in product.description])
 
     data = {
         'name': product.name,
         'price': product.price,
         'fiat': config.FIAT_CURRENCY,
-        'description': product.description,
+        'description': len(product.description),
+        'stock_list': stock_list if user_id == product.vendor_id else " ",
         'category': product.category,
         'owner': translation['mine'] if user_id == product.vendor_id else translation['view']
     }
@@ -333,7 +343,7 @@ def view_product_markup(product, user):
     return view_product_text, InlineKeyboardMarkup([key])
 
 
-def order_placed_markup(product, purchase, user):
+def order_placed_markup(product, purchase, user, stock_item):
     lang = user.language
     
     translations = {
@@ -349,8 +359,8 @@ def order_placed_markup(product, purchase, user):
 
     💰 <b>Price:</b> {price} {fiat}
 
-    📝 <b>Description:</b>
-    {description}
+    📝 <b>Stock Item:</b>
+    {stock_item}
     """,
             "continue_shopping": "Continue Shopping"
         },
@@ -366,8 +376,8 @@ def order_placed_markup(product, purchase, user):
 
     💰 <b>Цена:</b> {price} {fiat}
 
-    📝 <b>Описание:</b>
-    {description}
+    📝 <b>Stock Item:</b>
+    {stock_item}
     """,
             "continue_shopping": "Продолжить покупки"
         }
@@ -382,6 +392,7 @@ def order_placed_markup(product, purchase, user):
         'purchase_id': purchase.id,
         'fiat': config.FIAT_CURRENCY,
         'price': product.price,
+        'stock_item': stock_item
     }
     order_placed_text = translation['order_placed_text'].format(**data)
 
@@ -622,7 +633,7 @@ View Orders
 
 💰 <b>Price:</b> {price} {fiat}
 
-📝 <b>Description:</b>
+📝 <b>Stock Item:</b>
 {description}
             """,
             "completed": "Completed",
@@ -684,14 +695,14 @@ def get_create_product_keyboard(user, fields=None):
         "en": {
             "name": "Name:",
             "category": "Categories:",
-            "description": "Description:",
+            "description": "Stock:",
             "price": "Price:",
             "back_to_menu": "<<"
         },
         "ru": {
             "name": "Название:",
             "category": "Categories:",
-            "description": "Описание:",
+            "description": "Stock:",
             "price": "Цена:",
             "back_to_menu": "<<"
         }
@@ -712,7 +723,7 @@ def get_create_product_keyboard(user, fields=None):
         [InlineKeyboardButton(
             f"{translation['category']} {category}", callback_data="create_product:category")],
         [InlineKeyboardButton(
-            f"{translation['description']} {description}", callback_data="create_product:description")],
+            f"{translation['description']} {len(description)}x", callback_data="create_product:description")],
         [InlineKeyboardButton(
             f"{translation['price']} {price} {config.FIAT_CURRENCY}", callback_data="create_product:price")],
         [InlineKeyboardButton(translation['back_to_menu'],
