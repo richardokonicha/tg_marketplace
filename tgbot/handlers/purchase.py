@@ -27,8 +27,6 @@ def pay_vendor_from_crypto(product, purchase):
     total_amount = product.price
     vendor.account_balance += total_amount
     vendor.save()
-    purchase.status = "completed"
-    purchase.save()
     return True
 
 def purchase_payment_continue(product, purchase, user, bot, message_id, status=None):
@@ -45,7 +43,16 @@ def purchase_payment_continue(product, purchase, user, bot, message_id, status=N
         return True
         
     try:
-        message_text, keyboard = buttons.order_placed_markup(product, purchase, user)
+        
+        stock_item = product.description.pop()
+        
+        purchase.description = stock_item
+        purchase.status = "completed"
+        purchase.save()
+        product.save()
+        
+        
+        message_text, keyboard = buttons.order_placed_markup(product, purchase, user, stock_item)
         vendor_id = product.vendor_id
 
         try:
@@ -56,12 +63,20 @@ def purchase_payment_continue(product, purchase, user, bot, message_id, status=N
                 parse_mode="HTML",
                 reply_markup=keyboard,
             )
+        
         except Exception as e:
             logger.error("Could not edit message", exc_info=True)
             pass
 
-        notification_text = buttons.vendor_notification(user, product)
+        notification_text = buttons.vendor_notification(user, product, stock_item)
         bot.send_message(text=notification_text, chat_id=vendor_id)
+        
+        quantity = len(product.description)
+        if quantity == 0:
+            product.delete()
+            bot.send_message(text=f"Product {product.name} is exhausted", chat_id=vendor_id)
+
+        logger.info("Purchase payment handled successfully")
         return True
     except Exception as e:
         logger.error(f"An error occurred: {str(e)}", exc_info=True)
@@ -119,9 +134,6 @@ def pay_vendor_from_balance(user, product, bot, call, purchase):
         vendor.account_balance += total_amount
         user.save()
         vendor.save()
-        purchase.status = "completed"
-        purchase.save()
-
         return True
     else:
         try:
@@ -190,7 +202,7 @@ def buy_product(call, bot):
         product_name=product.name,
         address=user.address,
         price=product.price,
-        description=product.description,
+        # description=product.description,
         status="incomplete"
     )
     
@@ -198,10 +210,15 @@ def buy_product(call, bot):
 
     if payment_type == "pay_from_balance":
         status = pay_vendor_from_balance(user, product, bot, call, purchase)
-        status_pay = purchase_payment_continue(product, purchase, user, bot, message_id)
-        logger.info("Product bought")
-        product.delete()
-        bot.answer_callback_query(call.id, text="Purchase successful")
+        if status:
+            status_pay = purchase_payment_continue(product, purchase, user, bot, message_id)
+            try:
+                bot.answer_callback_query(call.id, text="Purchase successful")
+            except:
+                pass
+        else:
+            logger.info("Purchase Failed")
+            
 
     elif payment_type == "pay_with_crypto":
         status = pay_vendor_with_crypto(user, product, bot, purchase, message_id)
