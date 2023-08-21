@@ -1,4 +1,4 @@
-from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField, ReferenceField
+from mongoengine import Document, StringField, DecimalField, BooleanField, DateTimeField, IntField, ObjectIdField, ReferenceField, ListField
 from datetime import datetime
 from decimal import Decimal
 
@@ -46,7 +46,7 @@ class Purchase(Document):
 
 class Product(Document):
     name = StringField(required=True)
-    description = StringField(default="")
+    description = ListField(default=[])
     price = DecimalField(precision=2, rounding='ROUND_HALF_UP', default=Decimal('0.00'))
     category = StringField(default="General")
     vendor_id = IntField(required=True)
